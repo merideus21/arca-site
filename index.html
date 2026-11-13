@@ -267,7 +267,12 @@ body.easy #scard > * { flex: 0 1 auto }
 body.easy #scard .ramp { width: min(360px, 100%) }
 body.easy #scard .rampbox { display: grid; gap: 6px; width: min(360px, 100%) }
 body:not(.easy) #scard, body:not(.easy) #scv, body:not(.easy) .sonly { display: none !important }
-footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule); padding-top: 14px; max-width: 90ch }
+.pin3 { position: absolute; transform: translate(-50%, -100%); padding: 6px 10px; border-radius: 8px; background: var(--ink); color: #FFFFFF;
+  font: 500 14px var(--f-body); white-space: nowrap; pointer-events: none; box-shadow: 0 4px 16px rgba(14, 15, 17, .25) }
+.pin3::after { content: ""; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); border: 6px solid transparent; border-bottom: 0; border-top-color: var(--ink) }
+.place.sel { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) }
+.sl .sd { font-size: 14px; color: var(--muted); line-height: 1.35 }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule); padding-top: 14px }
 @media (prefers-reduced-motion: no-preference) { .stage.anim { transition: transform .18s ease-out } }
 </style>
 
@@ -295,11 +300,12 @@ footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule)
       <button class="mode" id="m2d" aria-pressed="true">2D map</button><button class="mode" id="m3d" aria-pressed="false">3D terrain</button>
       <span class="hasel" role="group" aria-label="Selection size">Select <button class="mode" data-ha="1" aria-pressed="true">1 ha</button><button class="mode" data-ha="9" aria-pressed="false">~10 ha</button><button class="mode" data-ha="100" aria-pressed="false">100 ha</button></span>
       <span class="m3only" hidden>
-        <label for="zsel">Area <select id="zsel"><option value="">All of Portugal</option></select></label>
+        <label for="zsel" hidden>Area <select id="zsel"><option value="">All of Portugal</option></select></label>
         <label for="zdrape" id="zdl" hidden>Drape <select id="zdrape"><option value="overall">Score</option><option value="hillshade">Hillshade</option><option value="slope">Slope</option><option value="flow">Water flow</option><option value="buildability">Buildability</option></select></label>
         <label for="ex3">Height × <input id="ex3" type="range" min="1" max="10" step="0.5" value="5"><output id="ex3v">3.0</output></label>
         <label for="hc"><input id="hc" type="checkbox"> Height colours</label>
         <button class="btn3" id="r3">Reset view</button>
+        <button class="btn3" id="rall">Reset all</button>
       </span>
     </div>
     <details class="fpanel" id="mpanel">
@@ -553,7 +559,9 @@ function flyEstate(id) {
   const z = (M.estates || []).find(q => q.id === id); if (!z) return;
   document.querySelectorAll("circle.es").forEach(c => c.classList.toggle("sel", c.dataset.e === id));
   document.querySelectorAll("#erows tr").forEach(r => r.classList.toggle("sel", r.dataset.e === id));
-  if (M.layers.some(l => l.key === "community_score")) cur = "community_score";
+  if (M.layers.some(l => l.key === "community_score") && !document.body.classList.contains("easy")) cur = "community_score";
+  document.querySelectorAll(".place").forEach(b => b.classList.toggle("sel", b.dataset.e === id));
+  if (!$("sheet3d").hidden && window.fly3d) { window.fly3d(z.cx / M.grid.w4, z.cy / M.grid.h4, z.id + " · " + z.freguesia.replace(/^União das freguesias de /, "")); $("sheet3d").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
   const s = $("sheet"), b = view.base, k = 7;
   view.s = k; view.x = s.clientWidth / 2 - b.ox - (z.cx / M.grid.w4) * b.w * k; view.y = s.clientHeight / 2 - b.oy - (z.cy / M.grid.h4) * b.h * k;
   apply(); s.scrollIntoView({ behavior: "smooth", block: "center" }); render();
@@ -603,7 +611,7 @@ function build() {
     `<circle class="lis" cx="${M.lisbon[0]}" cy="${M.lisbon[1]}" r="5"><title>Lisboa — drive-time origin</title></circle>`;
   buildZones(); buildEstates();
   let saved = null; try { saved = localStorage.getItem("arca-layer-v3"); } catch {}
-  cur = M.layers.some(l => l.key === saved) ? saved : "overall";
+  cur = "overall";
   wire(); fit(); render();
 }
 
@@ -767,8 +775,21 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
       if (S.mode === "nat") el.onclick = () => { $("zsel").value = String(it.z.rank <= 20 ? it.z.rank : ""); if (it.z.rank <= 20) showZone(it.z.rank); };
       $("sheet3d").appendChild(el); S.labels.push({ ...it, el }); }
   }
+  window.fly3d = (u, v, text) => {
+    if (!S.ready || S.mode !== "nat") return;
+    const t = world(u, v), from = { c: S.camera.position.clone(), t: S.controls.target.clone() },
+          to = { c: t.clone().add(new THREE.Vector3(-22, 38, 42)), t }, t0 = performance.now(), D = 1000;
+    const ease = x => 1 - Math.pow(1 - x, 4);
+    (function step() { const k = ease(Math.min(1, (performance.now() - t0) / D));
+      S.camera.position.lerpVectors(from.c, to.c, k); S.controls.target.lerpVectors(from.t, to.t, k); S.controls.update();
+      if (k < 1) requestAnimationFrame(step); })();
+    if (!S.pin) { const el = document.createElement("div"); el.className = "pin3"; $("sheet3d").appendChild(el); S.pin = { el }; }
+    Object.assign(S.pin, { u, v }); S.pin.el.textContent = text; S.pin.el.hidden = false;
+  };
   function place() {
     const st = $("sheet3d"), w = st.clientWidth, h = st.clientHeight;
+    if (S.pin && !S.pin.el.hidden) { const p = world(S.pin.u, S.pin.v).project(S.camera), vis = p.z < 1 && Math.abs(p.x) < 1.05 && Math.abs(p.y) < 1.05;
+      S.pin.el.style.display = vis ? "block" : "none"; if (vis) { S.pin.el.style.left = (p.x + 1) / 2 * w + "px"; S.pin.el.style.top = (1 - p.y) / 2 * h + "px"; } }
     for (const l of S.labels) { const p = world(l.u, l.v).project(S.camera), vis = p.z < 1 && Math.abs(p.x) < 1.05 && Math.abs(p.y) < 1.05;
       l.el.style.display = vis ? "block" : "none"; if (vis) { l.el.style.left = (p.x + 1) / 2 * w + "px"; l.el.style.top = (1 - p.y) / 2 * h + "px"; } }
   }
@@ -801,6 +822,15 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
   $("ex3s").oninput = e => { $("ex3").value = e.target.value; if (S.mesh) heights(); };
   ["pointerdown", "wheel", "touchstart"].forEach(t => $("exag").addEventListener(t, e => e.stopPropagation()));
   $("r3").onclick = () => S.ready && resetView();
+  $("rall").onclick = () => {
+    const safe = f => { try { f(); } catch (e) {} };
+    safe(() => $("w_reset").click()); safe(() => $("m_clear").click());
+    safe(() => document.querySelectorAll("#fpanel button").forEach(b => { if (/reset all/i.test(b.textContent)) b.click(); }));
+    safe(() => { $("ex3").value = 5; if (S.mesh) heights(); });
+    safe(() => { if ($("hc").checked) { $("hc").checked = false; drape(); } });
+    cur = "overall"; try { localStorage.setItem("arca-layer-v3", cur); } catch {} render();
+    if (S.pin) S.pin.el.hidden = true; if (S.ready) resetView();
+  };
   window.on3dLayer = () => { if (S.ready && S.mode === "nat" && !$("sheet3d").hidden) drape(); };
 })();
 </script>
@@ -867,9 +897,9 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
       row.classList.toggle("off", !cb.checked); if (r) $("f_" + k + "_o").textContent = fmtv(f, +r.value);
       apply();
     });
-    document.querySelector(".fpre").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+    document.querySelector("#fpanel .fpre").addEventListener("click", e => { const b = e.target.closest("button"); if (!b || !b.dataset.p) return;
       for (const k in st) delete st[k]; if (b.dataset.p !== "reset") Object.assign(st, PRESETS[b.dataset.p]);
-      document.querySelectorAll(".frow").forEach(row => { const k = row.dataset.k, f = F.find(q => q[0] === k), on = st[k] !== undefined;
+      document.querySelectorAll("#fpanel .frow").forEach(row => { const k = row.dataset.k, f = F.find(q => q[0] === k), on = st[k] !== undefined;
         row.querySelector("input[type=checkbox]").checked = on; row.classList.toggle("off", !on);
         const r = row.querySelector("input[type=range]"); if (r) { r.value = on ? st[k] : f[6]; $("f_" + k + "_o").textContent = fmtv(f, +r.value); } });
       apply(); });
@@ -1171,6 +1201,16 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
 <script>
 /* ---------- Simple view: four questions → one fit map, best places, plain cards ---------- */
 (() => {
+  const NOTE = {
+    water: "Rain, groundwater and pond sites, plus July heat and dryness by 2050.",
+    cheap: "Regional farmland price per hectare (Eurostat 2024).",
+    lisbon: "Drive to Lisbon and the airport, and to a future high-speed train station.",
+    beach: "Distance to the sea.",
+    fire: "Official fire-hazard class, past fires and nearby fuel (pine, eucalyptus).",
+    soil: "Soil quality, future dryness for crops, and gentle slopes.",
+    quiet: "Away from quarries, landfills, pig and poultry farms, wind turbines, airports and spray drift; low radon.",
+    build: "Where a house or ruin rebuild is likely allowed (planning rules, reserves).",
+  };
   const DIMS = { water: "Water and cool summers", cheap: "Cheap land", lisbon: "Close to Lisbon", beach: "Near the beach", fire: "Low fire risk", soil: "Good soil", quiet: "Quiet and healthy", build: "Can build" };
   let w = {}, simple = true;
   const active = () => Object.keys(DIMS).filter(k => (w[k] || 0) > 0);
@@ -1251,7 +1291,7 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
   }
   function setup() {
     $("sbtnrow").innerHTML = Object.entries(DIMS).map(([k, n]) => `<div class="sl" data-k="${k}"><div class="st"><label for="sl_${k}">${n}</label><output id="sl_${k}_o">off</output></div>
-      <input type="range" id="sl_${k}" min="0" max="10" step="1" value="0"></div>`).join("");
+      <input type="range" id="sl_${k}" min="0" max="10" step="1" value="0"><div class="sd">${NOTE[k]}</div></div>`).join("");
     let tmr = null;
     $("sbtnrow").addEventListener("input", e => { const d = e.target.closest(".sl"); if (!d) return; w[d.dataset.k] = +e.target.value;
       d.querySelector("output").textContent = w[d.dataset.k] ? "×" + w[d.dataset.k] : "off"; d.classList.toggle("on", w[d.dataset.k] > 0);
