@@ -1,0 +1,19 @@
+{
+  "id": "odemira-01",
+  "lat": 37.5823,
+  "lon": -8.5944,
+  "sizeM": 1000.0,
+  "grid": 257,
+  "minH": 23.38987096972327,
+  "maxH": 117.50019395694906,
+  "orthoPx": 4096,
+  "trees": 1829,
+  "shrubs": 5200,
+  "centreAlt": 78.04466158990024,
+  "sources": {
+    "imagery": "DGT OrtoSat 2023 (Dire\u00e7\u00e3o-Geral do Territ\u00f3rio), CC BY 4.0",
+    "elevation": "Copernicus GLO-30 DEM \u00a9 DLR/Airbus, provided by EU/ESA"
+  },
+  "farSizeM": 5000.0,
+  "farGrid": 129
+}
