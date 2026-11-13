@@ -272,6 +272,28 @@ body:not(.easy) #scard, body:not(.easy) #scv, body:not(.easy) .sonly { display: 
 .pin3::after { content: ""; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); border: 6px solid transparent; border-bottom: 0; border-top-color: var(--ink) }
 .place.sel { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) }
 .sl .sd { font-size: 14px; color: var(--muted); line-height: 1.35 }
+/* expert mode: one ingredient list replaces layer menu, weights, my mix, filter and hectare selection */
+#mpanel, #wpanel, #fpanel, .lsel, .hasel { display: none !important }
+body.easy #xpanel { display: none !important }
+.xpanel { display: grid; gap: 12px; border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; background: var(--panel) }
+.xtop { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; align-items: center }
+.xsum { color: var(--muted) } .xacts { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center }
+.xgroups { display: grid; gap: 8px; max-height: min(46vh, 520px); overflow-y: auto; padding-right: 6px }
+.xg { border-top: 1px solid var(--rule); padding-top: 8px }
+.xg summary { cursor: pointer; font: 500 16px var(--f-body); display: flex; justify-content: space-between; gap: 12px; list-style: none }
+.xg summary::-webkit-details-marker { display: none }
+.xg summary::before { content: "▸"; margin-right: 8px; color: var(--muted) } .xg[open] summary::before { content: "▾" }
+.xg summary span { color: var(--muted); font-size: 14px; margin-left: auto }
+.xrows { display: grid; gap: 6px; padding: 8px 0 4px }
+.xr { display: grid; grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 6px 16px; align-items: center; min-height: 44px }
+@media (max-width: 760px) { .xr { grid-template-columns: 44px minmax(0, 1fr); } .xr .xw, .xr .xl { grid-column: 2 } }
+.xr .nm { font-size: 15px } .xr .nm small { color: var(--muted); font-size: 13px; margin-left: 6px }
+.eye { width: 40px; height: 36px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); cursor: pointer; display: grid; place-items: center; color: var(--muted) }
+.eye[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #FFFFFF }
+.xw, .xl { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--muted) }
+.xw input[type=range], .xl input[type=range] { flex: 1; min-width: 60px; accent-color: var(--ink) }
+.xw output, .xl output { min-width: 58px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink) }
+.xl.off input[type=range], .xl.off output { opacity: .35 }
 footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule); padding-top: 14px }
 @media (prefers-reduced-motion: no-preference) { .stage.anim { transition: transform .18s ease-out } }
 </style>
@@ -283,7 +305,7 @@ footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule)
       <img class="logo" src="img/arca-wordmark.svg" alt="ARCA" width="260" height="48">
       <p class="tagline">Find your home</p>
     </div>
-    <button class="xbtn" id="xtoggle" type="button">Expert mode</button>
+    <button class="xbtn" id="xtoggle" type="button">Expert</button>
   </header>
   <div class="kpis" id="kpis"></div>
 
@@ -308,6 +330,14 @@ footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule)
         <button class="btn3" id="rall">Reset all</button>
       </span>
     </div>
+    <section class="xpanel" id="xpanel" aria-label="Ingredients">
+      <div class="xtop">
+        <div><b>Ingredients</b> <span class="xsum" id="xsum">Weight what matters (0 = off), view any ingredient, or set a limit. Land that misses a limit turns grey.</span></div>
+        <div class="xacts"><button class="btn3" id="x_ours" type="button">Our 10 criteria</button><button class="btn3" id="x_clear" type="button">Clear</button>
+          <label class="lst"><input type="checkbox" id="x_kept" checked> Only land that passes our hard filters</label></div>
+      </div>
+      <div class="xgroups" id="xgroups"></div>
+    </section>
     <details class="fpanel" id="mpanel">
       <summary><b>My mix</b> <span id="msum">· tick several variables to blend them into your own score</span></summary>
       <div class="fpre"><label class="lst"><input type="checkbox" id="m_show"> Show my mix on the map</label>
@@ -339,6 +369,7 @@ footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule)
         <canvas id="wcv" class="fcv" hidden></canvas>
         <canvas id="mcv" class="fcv" hidden></canvas>
         <canvas id="scv" class="fcv"></canvas>
+        <canvas id="xcv" class="fcv" hidden></canvas>
         <canvas id="fcv" class="fcv" hidden></canvas>
         <svg id="ov" preserveAspectRatio="none"></svg>
       </div>
@@ -734,10 +765,10 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
       const mg = m.getContext("2d"), id = mg.createImageData(m.width, m.height), rgb = css("--rule").match(/\w\w/g).map(h => parseInt(h, 16));
       for (let i = 0; i < S.demNat.land.length; i++) if (S.demNat.land[i]) id.data.set([...rgb, 255], i * 4);
       mg.putImageData(id, 0, 0); g.drawImage(m, 0, 0, c.width, c.height);
-      const easy = document.body.classList.contains("easy"), sc = easy && window.simpleCanvas ? window.simpleCanvas() : null;
+      const easy = document.body.classList.contains("easy"), sc = easy ? (window.simpleCanvas ? window.simpleCanvas() : null) : (window.expertCanvas ? window.expertCanvas() : null);
       if (sc) { g.imageSmoothingEnabled = false; g.drawImage(sc, 0, 0, c.width, c.height); g.imageSmoothingEnabled = true; } else g.drawImage(L, 0, 0, c.width, c.height);
       const fcv = !document.body.classList.contains("easy") && window.filterCanvas && window.filterCanvas(); if (fcv) { g.imageSmoothingEnabled = false; g.drawImage(fcv, 0, 0, c.width, c.height); g.imageSmoothingEnabled = true; }
-      if (M.zones && !easy) { g.fillStyle = "rgba(232,116,44,.85)"; const sx = c.width / M.grid.w4, sy = c.height / M.grid.h4;
+      if (M.zones && !easy && !sc) { g.fillStyle = "rgba(232,116,44,.85)"; const sx = c.width / M.grid.w4, sy = c.height / M.grid.h4;
         g.save(); g.scale(sx, sy); for (const z of M.zones) g.fill(new Path2D(z.d)); g.restore(); }
     } else {
       const n = S.zone.rank, k = $("zdrape").value;
@@ -830,6 +861,7 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
     safe(() => { if ($("hc").checked) { $("hc").checked = false; drape(); } });
     cur = "overall"; try { localStorage.setItem("arca-layer-v3", cur); } catch {} render();
     if (S.pin) S.pin.el.hidden = true; if (S.ready) resetView();
+    if (window.xReset) window.xReset();
   };
   window.on3dLayer = () => { if (S.ready && S.mode === "nat" && !$("sheet3d").hidden) drape(); };
 })();
@@ -1076,7 +1108,7 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
     s.addEventListener("pointerup", e => { if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 || e.target.closest(".ctls")) return;
       const r = $("img").getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
       if (fx < 0 || fy < 0 || fx >= 1 || fy >= 1) return;
-      setTimeout(() => show(Math.floor(fy * HA.H), Math.floor(fx * HA.W)), 0); });
+      /* hectare tap card removed (Max 2026-11-13): taps show the 1 km card */ });
     document.querySelector(".hasel").addEventListener("click", e => { const b = e.target.closest("button[data-ha]"); if (!b) return;
       size = +b.dataset.ha; document.querySelectorAll(".hasel button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
       if (sel) show(sel.r + Math.floor(sel.n / 2), sel.c + Math.floor(sel.n / 2)); });
@@ -1086,7 +1118,7 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
   const painted = new Map();
   async function paint() {
     const L = M.layers.find(l => l.key === cur), b = bandIdx(cur);
-    const on = view.s >= 3 && b >= 0 && L && !$("sheet").hidden && !window.mixShown && !document.body.classList.contains("easy");
+    const on = view.s >= 3 && b >= 0 && L && !$("sheet").hidden && !window.mixShown && !window.xFitOn && !document.body.classList.contains("easy");
     document.querySelectorAll(".hat").forEach(el => { if (!on || el.dataset.k !== cur) { el.remove(); painted.delete(el.dataset.t + el.dataset.k); } });
     if (!on) return;
     const sr = $("sheet").getBoundingClientRect(), ir = $("img").getBoundingClientRect(), T = HA.tile;
@@ -1264,7 +1296,7 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
   function places() {
     const E = (M.estates || []).map(e => ({ e, f: active().length ? near(e, fit) : e.score })).filter(r => r.f != null).sort((a, b) => b.f - a.f).slice(0, 10);
     $("ptitle").textContent = active().length ? "Best places for your sliders" : "Best places overall";
-    $("places").innerHTML = E.map((r, j) => `<button class="place" type="button" data-e="${r.e.id}"><div class="pn"><b>${j + 1}. ${r.e.freguesia.replace(/^União das freguesias de /, "")}</b><span>${Math.round(r.f)}</span></div>
+    $("places").innerHTML = E.map((r, j) => `<button class="place" type="button" data-e="${r.e.id}"><div class="pn"><b>${j + 1}. ${r.e.freguesia.replace(/^União das freguesias de /, "")}</b></div>
       <div class="pw">${r.e.concelho} · site ${r.e.id} · ${r.e.airport} min to the airport</div>${goodWatch(f => near(r.e, f))}</button>`).join("");
   }
   function card(i) {
@@ -1276,13 +1308,13 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
     }
     const m = M.bands.indexOf("mun_lo"), n = M.grid.w10 * M.grid.h10, mu = BIN[m * n + i] + 256 * BIN[(m + 1) * n + i];
     const f = fit(i);
-    el.innerHTML = `<h3>${mu ? M.concelhos[mu - 1] : "Portugal"}</h3>${active().length ? `<div><div class="fit">${f == null ? "–" : Math.round(f)}</div><p>fit out of 100 for your sliders</p></div>` : ""}
+    el.innerHTML = `<h3>${mu ? M.concelhos[mu - 1] : "Portugal"}</h3>
       ${kept(i) ? goodWatch(g => g(i)) : `<p>This land fails one of our hard filters (too dry, fire, flood, protected, too steep or built up).</p>`}
       <p>About 1 km around the point you tapped. All est.</p>`;
   }
   function apply_() {
     document.body.classList.toggle("easy", simple);
-    $("xtoggle").textContent = simple ? "Expert mode" : "Simple mode";
+    $("xtoggle").textContent = simple ? "Expert" : "Simple";
     document.querySelectorAll(".sl").forEach(d => { const k = d.dataset.k, v = w[k] || 0; d.classList.toggle("on", v > 0);
       d.querySelector("input").value = v; d.querySelector("output").textContent = v ? "×" + v : "off"; });
     window.simpleOn = simple;
@@ -1312,5 +1344,131 @@ Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(
   const wait = setInterval(() => { if (typeof M !== "undefined" && M && typeof BIN !== "undefined" && BIN && M.layers && document.getElementById("scard") && typeof flyEstate === "function") { clearInterval(wait); setup(); } }, 200);
 })();
 </script>
+<script>
+/* ---------- Expert mode: one ingredient list — view · weight · limit (Max 2026-11-13) ---------- */
+(() => {
+  const EYE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const OURS = { score_water: 10, score_soil: 7, score_drive: 5, score_access: 4, score_fire: 3, score_wellness: 3, score_hazards: 2, score_war: 1, score_unrest: 1 };
+  let st = { w: {}, lim: {}, on: {}, view: null, kept: true };
+  try { st = Object.assign(st, JSON.parse(localStorage.getItem("arca-expert") || "{}")); } catch {}
+  const save = () => { try { localStorage.setItem("arca-expert", JSON.stringify(st)); } catch {} };
+  const L = k => M.layers.find(l => l.key === k);
+  const ramp = l => l.legend && l.legend.type === "ramp";
+  const weightable = l => ramp(l) && (l.good === "high" || l.good === "low") && l.key !== "overall";
+  const limitable = l => weightable(l) && !l.log;
+  const easy = () => document.body.classList.contains("easy");
+  function good(Ly, v) {
+    if (v == null) return null;
+    const t = Ly.legend.ticks; let a = t[0], b = t[t.length - 1], x = v;
+    if (Ly.log) { a = Math.log10(Math.max(a, 1)); b = Math.log10(Math.max(b, 1)); x = Math.log10(Math.max(v, 1)); }
+    const g = Math.max(0, Math.min(1, (x - a) / (b - a))); return 100 * (Ly.good === "low" ? 1 - g : g);
+  }
+  const fmtv = (Ly, v) => fmt({ ...Ly, cats: null }, v);
+  const lo = Ly => Ly.legend.ticks[0], hi = Ly => Ly.legend.ticks[Ly.legend.ticks.length - 1];
+  const wKeys = () => Object.keys(st.w).filter(k => st.w[k] > 0 && L(k));
+  const lKeys = () => Object.keys(st.on).filter(k => st.on[k] && L(k));
+  const fitOn = () => !easy() && !st.view && (wKeys().length > 0 || lKeys().length > 0);
+  function passes(i) {
+    if (st.kept && value(L("ruleout"), i) !== 0) return false;
+    for (const k of lKeys()) { const Ly = L(k), v = value(Ly, i); if (v == null) return false;
+      if (Ly.good === "high" ? v < st.lim[k] : v > st.lim[k]) return false; }
+    return true;
+  }
+  function fit(i) {
+    if (!passes(i)) return null;
+    const ks = wKeys(); if (!ks.length) return 100;
+    let t = 0, sw = 0;
+    for (const k of ks) { const g = good(L(k), value(L(k), i)); if (g == null) return null; t += st.w[k] * Math.log(Math.max(g, 1) / 100); sw += st.w[k]; }
+    return 100 * Math.exp(t / sw);
+  }
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  let STOPS = null;
+  const col = t => { STOPS = STOPS || L("overall").legend.stops.map(hex); const n = STOPS.length - 1, x = Math.max(0, Math.min(1, t)) * n, j = Math.min(n - 1, Math.floor(x)), f = x - j;
+    return STOPS[j].map((v, k) => Math.round(v + (STOPS[j + 1][k] - v) * f)); };
+  function draw() {
+    const on = fitOn(), c = $("xcv"); window.xFitOn = on; c.hidden = !on;
+    $("img").style.visibility = on ? "hidden" : "";
+    if (on) {
+      const g = M.grid; c.width = g.w10; c.height = g.h10;
+      const ctx = c.getContext("2d"), img = ctx.createImageData(g.w10, g.h10), n = g.w10 * g.h10;
+      const lo_ = M.bands.indexOf("mun_lo") * n, hi_ = M.bands.indexOf("mun_hi") * n, onlyLimits = !wKeys().length;
+      for (let i = 0; i < n; i++) { if (!(BIN[lo_ + i] + BIN[hi_ + i])) continue;
+        const f = fit(i); const rgb = f == null ? [236, 237, 240] : onlyLimits ? [47, 133, 90] : col((f - 25) / 60);
+        img.data.set([...rgb, 255], i * 4); }
+      ctx.putImageData(img, 0, 0);
+      document.querySelectorAll(".hat").forEach(e => e.remove());
+    }
+    info();
+    if (window.on3dLayer) window.on3dLayer();
+  }
+  window.expertCanvas = () => fitOn() ? $("xcv") : null;
+  function info() {
+    if (!fitOn()) return;
+    const el = $("info"), stops = L("overall").legend.stops, w = wKeys(), l = lKeys();
+    el.innerHTML = `<div style="display:grid;gap:6px"><div class="step" style="margin:0">Your mix</div><h3>${w.length ? "Fit for your weights" : "Land that meets your limits"}</h3></div>
+      <p class="note">${w.length ? "Weighted: " + w.map(k => `${L(k).label} ×${st.w[k]}`).join(" · ") + "." : ""} ${l.length ? "Limits: " + l.map(k => `${L(k).label} ${L(k).good === "high" ? "≥" : "≤"} ${fmtv(L(k), st.lim[k])}`).join(" · ") + "." : ""}</p>
+      <div class="legend">${w.length ? `<div class="ramp" style="background:linear-gradient(90deg,${stops.join(",")})"></div><div class="ticks"><span>not a fit</span><span>good fit</span></div>` : `<ul><li><i style="background:#2F855A"></i><span>Meets every limit</span></li></ul>`}
+      <div class="good">Grey land misses a limit${st.kept ? " or fails our hard filters" : ""}. One weak score on anything you weight pulls the fit down.</div></div>
+      <div class="probe" id="probe"><div class="hint">Tap the map to see what is good and what to watch there.</div></div>`;
+  }
+  function chips(i) {
+    const g = [], w = [];
+    for (const k of wKeys()) { const v = good(L(k), value(L(k), i)); if (v == null) continue; if (v >= 65) g.push(L(k).label); else if (v <= 35) w.push(L(k).label); }
+    const miss = lKeys().filter(k => { const Ly = L(k), v = value(Ly, i); return v == null || (Ly.good === "high" ? v < st.lim[k] : v > st.lim[k]); }).map(k => L(k).label);
+    return `${g.length ? `<div class="chips">${g.map(t => `<span class="chip g">Good: ${t}</span>`).join("")}</div>` : ""}${w.length ? `<div class="chips">${w.map(t => `<span class="chip w">Watch: ${t}</span>`).join("")}</div>` : ""}${miss.length ? `<div class="chips">${miss.map(t => `<span class="chip w">Misses limit: ${t}</span>`).join("")}</div>` : ""}`;
+  }
+  function rows() {
+    $("xgroups").innerHTML = Object.entries(GROUPS).map(([g, name]) => {
+      const ls = M.layers.filter(l => l.group === g); if (!ls.length) return "";
+      const act = ls.filter(l => (st.w[l.key] || 0) > 0 || st.on[l.key]).length;
+      return `<details class="xg" data-g="${g}"${act ? " open" : ""}><summary>${name}<span>${act ? act + " in use" : ls.length + (ls.length === 1 ? " ingredient" : " ingredients")}</span></summary><div class="xrows">${ls.map(l => {
+        const k = l.key, wt = weightable(l), lm = limitable(l), w = st.w[k] || 0, on = !!st.on[k];
+        if (lm && st.lim[k] == null) st.lim[k] = +((lo(l) + hi(l)) / 2).toPrecision(3);
+        const step = lm ? +((hi(l) - lo(l)) / 50).toPrecision(2) : 1;
+        return `<div class="xr" data-k="${k}"><button class="eye" type="button" aria-pressed="${st.view === k}" title="View ${l.label} on the map" aria-label="View ${l.label}">${EYE}</button>
+          <div class="nm">${l.label}${l.estimate ? "<small>est.</small>" : ""}</div>
+          ${wt ? `<div class="xw"><span>Weight</span><input type="range" min="0" max="10" step="1" value="${w}" data-a="w" aria-label="Weight for ${l.label}"><output>${w ? "×" + w : "off"}</output></div>` : `<div class="xw"><span>View only</span></div>`}
+          ${lm ? `<label class="xl${on ? "" : " off"}"><input type="checkbox" data-a="on" ${on ? "checked" : ""} aria-label="Use a limit for ${l.label}"> ${l.good === "high" ? "At least" : "At most"}
+            <input type="range" min="${lo(l)}" max="${hi(l)}" step="${step}" value="${st.lim[k]}" data-a="lim" aria-label="Limit for ${l.label}"><output>${fmtv(l, st.lim[k])}</output></label>` : "<div></div>"}</div>`; }).join("")}</div></details>`; }).join("");
+    summary();
+  }
+  function summary() {
+    const w = wKeys().length, l = lKeys().length;
+    $("xsum").textContent = w || l ? `${w} weighted · ${l} limit${l === 1 ? "" : "s"}${st.view ? " · viewing " + L(st.view).label : ""}` : "Weight what matters (0 = off), view any ingredient, or set a limit. Land that misses a limit turns grey.";
+  }
+  let tmr = null; const later = () => { clearTimeout(tmr); tmr = setTimeout(() => { save(); draw(); summary(); }, 150); };
+  function setView(k) {
+    st.view = st.view === k ? null : k;
+    document.querySelectorAll("#xgroups .eye").forEach(b => b.setAttribute("aria-pressed", b.closest(".xr").dataset.k === st.view));
+    cur = st.view || "overall"; try { localStorage.setItem("arca-layer-v3", cur); } catch {}
+    save(); render(); draw(); summary();
+  }
+  window.xReset = () => { st = { w: {}, lim: {}, on: {}, view: null, kept: true }; $("x_kept").checked = true; save(); rows(); cur = "overall"; render(); draw(); };
+  function setup() {
+    $("x_kept").checked = st.kept !== false;
+    rows();
+    $("xgroups").addEventListener("click", e => { const b = e.target.closest(".eye"); if (b) setView(b.closest(".xr").dataset.k); });
+    $("xgroups").addEventListener("input", e => { const r = e.target.closest(".xr"); if (!r) return; const k = r.dataset.k, a = e.target.dataset.a, Ly = L(k);
+      if (a === "w") { st.w[k] = +e.target.value; e.target.nextElementSibling.textContent = st.w[k] ? "×" + st.w[k] : "off"; }
+      if (a === "lim") { st.lim[k] = +e.target.value; e.target.nextElementSibling.textContent = fmtv(Ly, st.lim[k]); if (!st.on[k]) { st.on[k] = true; r.querySelector('[data-a="on"]').checked = true; r.querySelector(".xl").classList.remove("off"); } }
+      if (a === "on") { st.on[k] = e.target.checked; r.querySelector(".xl").classList.toggle("off", !st.on[k]); }
+      if (st.view) { st.view = null; document.querySelectorAll("#xgroups .eye").forEach(b => b.setAttribute("aria-pressed", "false")); cur = "overall"; render(); }
+      later(); });
+    $("x_ours").onclick = () => { st.w = { ...OURS }; st.view = null; cur = "overall"; save(); rows(); render(); draw(); };
+    $("x_clear").onclick = () => window.xReset();
+    $("x_kept").onchange = e => { st.kept = e.target.checked; save(); draw(); };
+    const orig = render; render = function () { orig(); if (fitOn()) info(); };
+    const op = probe; probe = i => { if (!easy() && fitOn()) { const el = $("probe"); if (!el) return; if (i == null) return;
+        const m = M.bands.indexOf("mun_lo"), n = M.grid.w10 * M.grid.h10, mu = BIN[m * n + i] + 256 * BIN[(m + 1) * n + i];
+        el.innerHTML = `<div class="where">${mu ? M.concelhos[mu - 1] : "Portugal"}</div>${passes(i) ? chips(i) || '<div class="hint">Nothing stands out here.</div>' : `<div class="hint">Misses a limit or our hard filters.</div>${chips(i)}`}`; return; }
+      op(i); };
+    $("xtoggle").addEventListener("click", () => setTimeout(draw, 50));
+    if (st.view) { cur = st.view; render(); }
+    draw();
+  }
+  const wait = setInterval(() => { if (typeof M !== "undefined" && M && typeof BIN !== "undefined" && BIN && M.layers && document.getElementById("xgroups") && typeof render === "function") { clearInterval(wait); setTimeout(setup, 300); } }, 200);
+})();
+</script>
+
 
 
