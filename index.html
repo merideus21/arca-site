@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<title>Arca Land Explorer</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="robots" content="noindex, nofollow">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+<style>
+/* Layout: Arca brand kit v1 — wordmark bar, big left-aligned intro, one framed photo, then the map as the product stage */
+:root {
+  /* White page, ink and cool greys. Colour only comes from the land (map layers). Single light look by design. */
+  color-scheme: light;
+  --bg: #FFFFFF; --panel: #FFFFFF; --ink: #0E0F11; --muted: #6A6D72; --rule: #E3E4E7;
+  --accent: #0E0F11; --accent-soft: #EEEFF1; --sea: #F2F3F5; --stage: #F2F3F5;
+  --estimate: #9A6A1E; --estimate-bg: #F5EEE2; --ok: #4E6B4A; --land-water: #5C8AA0;
+  --f-display: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box }
+input[type=range], input[type=checkbox] { accent-color: var(--accent) }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 32px }
+body { overflow-x: hidden }
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 20px }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 24px;
+  border-bottom: 1px solid var(--rule); padding-bottom: 14px }
+.ititle { font: 400 clamp(22px, 3vw, 30px)/1.15 var(--f-display); margin: 0; text-wrap: balance }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 62ch }
+.step { font: 500 14px/1 var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px }
+.kpis { display: flex; flex-wrap: wrap; gap: 16px 40px }
+.kpi { display: grid; gap: 2px }
+.kpi b { font: 500 32px/1 var(--f-data); letter-spacing: -.02em; font-variant-numeric: tabular-nums }
+.kpi span { color: var(--muted); font-size: 14px }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start }
+@media (max-width: 960px) { .main { grid-template-columns: minmax(0, 1fr) } }
+@media (max-width: 720px) { .main { grid-template-columns: minmax(0, 1fr) } }
+
+/* top bar, intro, framed photo */
+.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 72px; border-bottom: 1px solid var(--rule); margin-top: -20px }
+.word { font: 600 20px/1 var(--f-display); letter-spacing: .42em; text-transform: uppercase; color: var(--ink); text-decoration: none; padding: 8px 0 }
+.toplabel { font: 500 14px var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
+.intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 32px 64px; padding-block: 48px 8px }
+.intro h1 { font: 500 clamp(44px, 6.4vw, 104px)/1.02 var(--f-display); letter-spacing: -.02em; margin: 0; text-wrap: balance }
+.label { font: 500 14px var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px }
+.intro .sub { font-size: 18px; max-width: 46ch; color: var(--muted); margin: 20px 0 0 }
+.frame { margin: 0; border-radius: 20px; overflow: hidden; height: clamp(200px, 30vw, 460px); background: var(--stage); position: relative }
+.frame img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; display: block }
+.lsel { display: inline-flex; gap: 8px; align-items: center; font: 700 15px var(--f-body); color: var(--muted) }
+.lsel select { font: 500 15px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--accent);
+  border-radius: 8px; padding: 7px 15px; max-width: min(78vw, 360px); cursor: pointer }
+.lsel select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+/* layer index (old list, kept for reference) */
+nav { display: grid; gap: 14px }
+.grp h2 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 4px;
+  font: 600 14px/1.2 var(--f-body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted) }
+.grp h2 small { font: 400 14px var(--f-data); letter-spacing: 0; text-transform: none }
+.grp ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px }
+.lyr { width: 100%; text-align: left; border: 0; background: none; color: var(--ink); font: inherit; cursor: pointer;
+  padding: 5px 8px; border-radius: 8px; display: flex; justify-content: space-between; gap: 8px }
+.lyr:hover { background: var(--accent-soft) }
+.lyr[aria-pressed="true"] { background: var(--accent); color: var(--panel); font-weight: 500 }
+.lyr:focus-visible, .ctl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.lyr .est { font: 500 15px var(--f-data); color: var(--estimate) }
+.lyr[aria-pressed="true"] .est { color: var(--panel); opacity: .85 }
+@media (max-width: 720px) {
+  nav { display: flex; overflow-x: auto; gap: 14px; padding-bottom: 6px }
+  .grp { flex: 0 0 auto } .grp ul { display: flex; gap: 4px } .lyr { white-space: nowrap; border: 1px solid var(--rule) }
+}
+
+/* map sheet */
+.sheet { position: relative; background: var(--sea); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden;
+  height: min(82vh, 860px); touch-action: none; cursor: crosshair }
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0 }
+.stage img, .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: auto }
+.stage svg path.d { fill: none; stroke: var(--ink); stroke-opacity: .35; stroke-width: .7; vector-effect: non-scaling-stroke }
+.mapcol { min-width: 0; display: grid; gap: 8px }
+.modebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px }
+.mode { border: 1px solid var(--rule); background: var(--panel); color: var(--ink); font: 500 15px var(--f-body); padding: 8px 14px; min-height: 44px; cursor: pointer; transition: background .2s var(--ease), color .2s var(--ease) }
+.mode:first-child { border-radius: 8px 0 0 8px } .mode + .mode { border-radius: 0 8px 8px 0; margin-left: -1px }
+.mode[aria-pressed="true"] { background: var(--accent); color: var(--panel); border-color: var(--accent) }
+.m3only { display: inline-flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 15px; color: var(--muted) }
+.m3only[hidden] { display: none !important }
+.m3only label { display: inline-flex; gap: 6px; align-items: center }
+.m3only select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 3px 5px }
+.m3only output { font: 500 14px var(--f-data); color: var(--ink) }
+.btn3 { border: 1px solid var(--rule); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 4px 9px; font: inherit; cursor: pointer }
+.mode:focus-visible, .btn3:focus-visible, .m3only select:focus-visible, .m3only input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.sheet3d { cursor: grab; touch-action: none }
+.sheet3d canvas { display: block; width: 100%; height: 100% }
+.hleg { position: absolute; right: 15px; top: 15px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px; font: 14px var(--f-data); color: var(--ink); display: grid; gap: 4px; min-width: 150px }
+.hleg[hidden] { display: none }
+.hleg .bar { height: 15px; border-radius: 2px }
+.hleg .tk { display: flex; justify-content: space-between; color: var(--muted) }
+.loading3d { position: absolute; inset: 0; display: grid; place-items: center; font: 15px var(--f-data); color: var(--muted) }
+.exag { position: absolute; left: 15px; top: 15px; font: 500 14px var(--f-data); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); padding: 3px 6px; border-radius: 6px }
+.hint3 { position: absolute; left: 15px; bottom: 15px; right: 15px; font: 14px var(--f-data); color: var(--muted); pointer-events: none }
+.lbl3 { position: absolute; transform: translate(-50%, -125%); font: 500 14px/1 var(--f-data); background: var(--panel); color: var(--ink); border: 1px solid var(--accent); padding: 3px 5px; border-radius: 6px; cursor: pointer; white-space: nowrap }
+.fcv { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none }
+.fpanel { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 8px 14px }
+.fpanel summary { cursor: pointer; font-size: 15px; color: var(--muted) } .fpanel summary b { color: var(--ink) }
+.fpanel[open] summary { margin-bottom: 8px }
+.fpre { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; color: var(--muted); margin-bottom: 8px }
+.fstat { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule) }
+.fstat b { font: 500 16px var(--f-data); color: var(--ink) } .fstat span { color: var(--muted) }
+.frows { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 4px 18px; padding: 8px 0 }
+.frow { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: center; font-size: 15px }
+.frow input[type=range] { grid-column: 1 / -1; width: 100% }
+.frow output { font: 500 14px var(--f-data); color: var(--ink) }
+.frow.off { color: var(--muted) } .frow.off input[type=range] { opacity: .35 }
+.frow.block { color: var(--accent) }
+.ftop { font-size: 15px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.ftop button { border: 1px solid var(--rule); background: var(--bg); color: var(--ink); border-radius: 6px; padding: 2px 6px; font: 14px var(--f-data); cursor: pointer }
+.fnote { font-size: 14px; color: var(--muted); margin: 6px 0 0 }
+.lst { font-size: 15px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center }
+.stage svg circle.lp { fill: #2f6fb3; stroke: var(--panel); stroke-width: 1.5; vector-effect: non-scaling-stroke; cursor: pointer }
+.stage svg circle.lp.near { fill: var(--accent) }
+.hasel { display: inline-flex; align-items: center; gap: 0; font-size: 15px; color: var(--muted) } .hasel > .mode { margin-left: -1px; border-radius: 0 } .hasel > .mode:first-of-type { margin-left: 8px; border-radius: 8px 0 0 8px } .hasel > .mode:last-of-type { border-radius: 0 8px 8px 0 }
+.hat { position: absolute; image-rendering: pixelated; pointer-events: none }
+.hacard dl { grid-template-columns: auto 1fr auto } .hacard dd.sc { color: var(--muted) } .hacard label { display: flex; gap: 6px; align-items: center; color: var(--ink) }
+.stage svg path.z { fill: var(--ink); fill-opacity: .16; stroke: none; cursor: pointer }
+.stage svg path.z.top { fill: var(--accent); fill-opacity: .42 }
+.stage svg path.z.sel { fill: var(--accent); fill-opacity: .9; stroke: var(--panel); stroke-width: 1.5; vector-effect: non-scaling-stroke }
+.zones { display: grid; gap: 15px }
+.zones h2 { font: 500 24px/1.2 var(--f-display); letter-spacing: -.02em; margin: 0 }
+.zones .meta { color: var(--muted); font-size: 15px; margin: 0 }
+.ztable-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; background: var(--panel) }
+.ztable { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 760px }
+.ztable th { text-align: left; font: 600 14px var(--f-body); letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+  padding: 8px 15px; border-bottom: 1px solid var(--rule) }
+.ztable td { padding: 7px 15px; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums }
+.ztable td.n { font-family: var(--f-data); text-align: right }
+.ztable tr { cursor: pointer } .ztable tbody tr:hover { background: var(--accent-soft) }
+.ztable tr.sel { background: var(--accent-soft) }
+.tag { display: inline-block; font: 500 15px/1 var(--f-data); padding: 3px 5px; border-radius: 6px; background: var(--estimate-bg); color: var(--estimate); margin-right: 3px }
+.zcard { border-top: 1px solid var(--rule); padding-top: 14px; display: grid; gap: 6px }
+.zcard h4 { margin: 0; font: 500 20px var(--f-display) }
+.stage svg .lis { fill: var(--accent); stroke: var(--panel); stroke-width: 1.5; vector-effect: non-scaling-stroke }
+.ctls { position: absolute; right: 15px; top: 15px; display: grid; gap: 4px }
+.ctl { width: 48px; height: 48px; touch-action: manipulation; border: 1px solid var(--rule); background: var(--panel); color: var(--ink);
+  border-radius: 8px; font: 500 16px/1 var(--f-data); cursor: pointer }
+.cursor { position: absolute; width: 15px; height: 15px; border: 1.5px solid var(--ink); pointer-events: none;
+  transform: translate(-50%, -50%); display: none }
+.scale { position: absolute; left: 15px; bottom: 15px; font: 14px var(--f-data); color: var(--muted);
+  background: var(--panel); padding: 3px 6px; border-radius: 6px; border: 1px solid var(--rule) }
+
+/* My mix */
+.mpick { display: grid; gap: 15px; padding: 8px 15px 8px 0; max-height: 230px; overflow-y: auto; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule) }
+.mpick .g { display: flex; flex-wrap: wrap; gap: 5px; align-items: center }
+.mpick .g b { flex-basis: 100%; font: 700 14px var(--f-body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted) }
+.chip { border: 1px solid var(--rule); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 4px 14px; font: 15px var(--f-body); cursor: pointer; min-height: 32px }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel) }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.mleg { display: grid; gap: 4px; max-width: 420px; font: 14px var(--f-data); color: var(--muted) }
+.mleg .ramp { height: 15px; border-radius: 2px } .mleg .ticks { display: flex; justify-content: space-between }
+.mtag { position: absolute; left: 15px; top: 15px; background: var(--panel); border: 1px solid var(--accent); border-radius: 8px; padding: 4px 8px; font: 700 14px var(--f-body); color: var(--accent); pointer-events: none }
+.mixro { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 12px; padding: 15px 14px; display: grid; gap: 6px; margin-bottom: 8px }
+.mixro .mh { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700 }
+.mixro .mh span { font: 500 20px var(--f-data) } .mixro .mh small { font-size: 14px; color: var(--muted) }
+.probe .mixro dl, .mixro dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 3px 14px }
+.mixro dt { color: var(--muted) } .mixro dd { margin: 0; font: 15px var(--f-data); text-align: right; font-variant-numeric: tabular-nums }
+.probe .hacard dl { grid-template-columns: minmax(0, 1fr) auto auto; gap: 3px 15px }
+.probe .hacard dd { text-align: right }
+.mixro .gd { display: inline-block; min-width: 2.6em; color: var(--accent) }
+
+/* readout card */
+.info { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; display: grid; gap: 14px }
+.info h3 { font: 500 24px/1.2 var(--f-display); letter-spacing: -.02em; margin: 0 }
+.badge { display: inline-block; font: 500 15px/1 var(--f-data); letter-spacing: .05em; text-transform: uppercase;
+  padding: 4px 6px; border-radius: 6px; background: var(--estimate-bg); color: var(--estimate) }
+.note { color: var(--muted); margin: 0 }
+.legend .ramp { height: 14px; border-radius: 2px }
+.legend .ticks { display: flex; justify-content: space-between; font: 14px var(--f-data); color: var(--muted);
+  font-variant-numeric: tabular-nums; margin-top: 4px }
+.legend .good { font-size: 14px; color: var(--muted); margin-top: 4px }
+.legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px }
+.legend li { display: flex; align-items: center; gap: 8px; font-size: 15px }
+.legend li i { width: 14px; height: 14px; border-radius: 2px; flex: none }
+.legend li span:last-child { margin-left: auto; font: 14px var(--f-data); color: var(--muted) }
+.probe { border-top: 1px solid var(--rule); padding-top: 14px; display: grid; gap: 6px }
+.probe .where { font-weight: 600 }
+.probe .hint { color: var(--muted) }
+.probe dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 3px 14px }
+.probe dt { color: var(--muted) }
+.probe dd { margin: 0; font: 15px var(--f-data); font-variant-numeric: tabular-nums; text-align: right }
+.probe dd.cur { color: var(--accent); font-weight: 500 }
+.flag { border-left: 3px solid var(--estimate); background: var(--estimate-bg); padding: 8px 15px; border-radius: 0 8px 8px 0;
+  font-size: 15px }
+.stage svg circle.es { fill: var(--land-water); fill-opacity: .12; stroke: var(--land-water); stroke-width: 1.5; vector-effect: non-scaling-stroke; cursor: pointer }
+.stage svg circle.es.sel { fill-opacity: .5; stroke-width: 2.5 }
+.stage svg text.esl { font: 600 3px var(--f-data); fill: #2E4F5E; paint-order: stroke; stroke: #FFFFFF; stroke-width: .6px; pointer-events: none }
+.stage svg path.z.home { stroke: var(--land-water); stroke-width: 1.5; vector-effect: non-scaling-stroke }
+/* simple view (default): four questions, the map, best places; expert tools on demand */
+.simple { display: grid; gap: 20px; padding-top: 24px }
+.shead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px }
+.shead h2 { font: 500 clamp(32px, 3vw, 40px)/1.1 var(--f-display); letter-spacing: -.02em; margin: 0 }
+.sbtns { display: flex; flex-wrap: wrap; gap: 12px }
+.sbtn { min-height: 56px; padding: 0 22px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); color: var(--ink);
+  font: 500 18px var(--f-body); cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: background .2s var(--ease), color .2s var(--ease) }
+.sbtn[aria-pressed="true"] { background: var(--ink); color: #FFFFFF; border-color: var(--ink) }
+.sbtn:focus-visible, .xbtn:focus-visible, .place:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+.xbtn { min-height: 48px; padding: 0 18px; border: 1px solid var(--rule); border-radius: 8px; background: var(--accent-soft); color: var(--ink); font: 500 16px var(--f-body); cursor: pointer }
+.shint { margin: 0; color: var(--muted); font-size: 16px }
+.places { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px }
+.place { text-align: left; border: 1px solid var(--rule); border-radius: 20px; background: var(--panel); padding: 16px 18px; cursor: pointer; display: grid; gap: 6px; font: inherit; color: var(--ink) }
+.place:hover { background: var(--stage) }
+.place .pn { display: flex; justify-content: space-between; gap: 12px; align-items: baseline }
+.place .pn b { font: 500 20px/1.2 var(--f-display); letter-spacing: -.02em }
+.place .pn span { font: 500 24px/1 var(--f-data); font-variant-numeric: tabular-nums }
+.place .pw { color: var(--muted); font-size: 15px }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chip.g, .chip.w { font: 500 14px var(--f-body); padding: 3px 8px; border-radius: 8px; border: 0; cursor: default; min-height: 0 }
+.chip.g { background: #E7EEE5; color: var(--ok) } .chip.w { background: var(--estimate-bg); color: var(--estimate) }
+#scard { display: grid; gap: 14px; align-content: start }
+#scard h3 { font: 500 24px/1.2 var(--f-display); letter-spacing: -.02em; margin: 0 }
+#scard .fit { font: 500 48px/1 var(--f-data); letter-spacing: -.02em }
+#scard p { margin: 0; color: var(--muted) }
+#scard .ramp { height: 10px; border-radius: 2px; background: linear-gradient(90deg, #E6E7EA, #A4AD8A, #6E7552, #2F3A24) }
+#scard .ticks { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted) }
+body.easy .modebar, body.easy #mpanel, body.easy #wpanel, body.easy #fpanel, body.easy #zones, body.easy #estates, body.easy #info,
+body.easy #wcv, body.easy #mcv, body.easy #mtag { display: none !important }
+body.easy #img { visibility: hidden }
+body.easy .stage svg path.z, body.easy .lbl3 { display: none !important }
+.viewbtns { display: flex; gap: 8px; flex-wrap: wrap }
+.hero2 { display: flex; justify-content: space-between; align-items: start; gap: 16px; padding-block: 40px 8px; margin-top: -20px }
+.brandblock { display: grid; gap: 14px }
+.hero2 .logo { height: clamp(32px, 4vw, 52px); width: auto }
+.tagline { margin: 0; font: 500 clamp(18px, 1.8vw, 24px)/1.2 var(--f-display); letter-spacing: -.01em; color: var(--muted) }
+.shead { align-items: start; flex-wrap: nowrap }
+#sbtnrow { flex: 1 1 auto }
+#xtoggle { flex: none; min-height: 48px }
+.kpis { padding-top: 8px }
+.sliders { flex: 1 1 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 32px }
+@media (max-width: 900px) { .sliders { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+.sl { display: grid; gap: 6px }
+.sl .st { display: flex; justify-content: space-between; gap: 8px; font: 500 17px var(--f-body) }
+.sl .st output { font-variant-numeric: tabular-nums; color: var(--muted) }
+.sl.on .st output { color: var(--ink) }
+.sl input { width: 100%; accent-color: var(--ink); min-height: 28px }
+.exag { display: flex; gap: 8px; align-items: center; font: 500 14px var(--f-body) }
+.exag label { display: inline-flex; gap: 8px; align-items: center }
+.exag input { width: 120px; accent-color: var(--ink) }
+/* full-width map in both modes; readout as a full-width panel under the map */
+.main { grid-template-columns: minmax(0, 1fr) !important }
+.sheet { height: max(520px, calc(100vh - 140px)) }
+#info { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px 32px; align-items: start }
+.hero2 { border-bottom: 0 }
+@media (max-width: 720px) { .shead { flex-wrap: wrap } }
+body.easy .xonly { display: none !important }
+body.easy .main { grid-template-columns: minmax(0, 1fr) }
+body.easy .sheet { height: max(520px, calc(100vh - 140px)) }
+body.easy #scard { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 40px; padding: 20px 24px }
+body.easy #scard > * { flex: 0 1 auto }
+body.easy #scard .ramp { width: min(360px, 100%) }
+body.easy #scard .rampbox { display: grid; gap: 6px; width: min(360px, 100%) }
+body:not(.easy) #scard, body:not(.easy) #scv, body:not(.easy) .sonly { display: none !important }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule); padding-top: 14px; max-width: 90ch }
+@media (prefers-reduced-motion: no-preference) { .stage.anim { transition: transform .18s ease-out } }
+</style>
+
+<div class="wrap">
+<script>try { if (JSON.parse(localStorage.getItem("arca-simple") || "{}").simple !== false) document.body.classList.add("easy"); } catch (e) { document.body.classList.add("easy"); }</script>
+  <header class="hero2">
+    <div class="brandblock">
+      <img class="logo" src="img/arca-wordmark.svg" alt="ARCA" width="260" height="48">
+      <p class="tagline">Find your home</p>
+    </div>
+    <button class="xbtn" id="xtoggle" type="button">Expert mode</button>
+  </header>
+  <div class="kpis" id="kpis"></div>
+
+  <section class="simple" id="sq" aria-label="What matters to you">
+    <div class="shead">
+      <div class="sliders sonly" id="sbtnrow" role="group" aria-label="How much each thing matters"></div>
+    </div>
+    <p class="shint sonly" id="shint">Slide what matters to you: 0 ignores it, 10 matters most. A weak score on anything you care about pulls the fit down, so one bad factor is not hidden by good ones.</p>
+  </section>
+  <div class="main">
+    <div class="mapcol">
+    <div class="modebar" role="group" aria-label="Map view">
+      <label class="lsel" for="layer">Layer <select id="layer"></select></label>
+      <button class="mode" id="m2d" aria-pressed="true">2D map</button><button class="mode" id="m3d" aria-pressed="false">3D terrain</button>
+      <span class="hasel" role="group" aria-label="Selection size">Select <button class="mode" data-ha="1" aria-pressed="true">1 ha</button><button class="mode" data-ha="9" aria-pressed="false">~10 ha</button><button class="mode" data-ha="100" aria-pressed="false">100 ha</button></span>
+      <span class="m3only" hidden>
+        <label for="zsel">Area <select id="zsel"><option value="">All of Portugal</option></select></label>
+        <label for="zdrape" id="zdl" hidden>Drape <select id="zdrape"><option value="overall">Score</option><option value="hillshade">Hillshade</option><option value="slope">Slope</option><option value="flow">Water flow</option><option value="buildability">Buildability</option></select></label>
+        <label for="ex3">Height × <input id="ex3" type="range" min="1" max="10" step="0.5" value="5"><output id="ex3v">3.0</output></label>
+        <label for="hc"><input id="hc" type="checkbox"> Height colours</label>
+        <button class="btn3" id="r3">Reset view</button>
+      </span>
+    </div>
+    <details class="fpanel" id="mpanel">
+      <summary><b>My mix</b> <span id="msum">· tick several variables to blend them into your own score</span></summary>
+      <div class="fpre"><label class="lst"><input type="checkbox" id="m_show"> Show my mix on the map</label>
+        <label class="lst"><input type="checkbox" id="m_kept" checked> Only land kept after rule-out</label>
+        <button class="btn3" id="m_clear">Clear all</button></div>
+      <div class="mleg" id="mleg"></div>
+      <div class="frows" id="mrows"></div>
+      <div class="mpick" id="mpick"></div>
+      <p class="fnote">Each variable is turned into 0–100 (100 = best for the Ark, using the colour range of its layer) and averaged with your weights, on 1 km blocks. Tap the map for each variable's real value. Your mix stays in this browser only and never changes the config.</p>
+    </details>
+    <details class="fpanel" id="wpanel">
+      <summary><b>Weights</b> <span id="wsum">· your config weights</span></summary>
+      <div class="fpre"><button class="btn3" id="w_reset">Back to config weights</button><button class="btn3" id="w_equal">All equal</button></div>
+      <div class="frows" id="wrows"></div>
+      <div class="ftop" id="wtop"></div>
+      <p class="fnote">Sliders recolour the <b>Overall score</b> layer and re-rank the zones live (1 km blocks). Which hectares form zones still follows the config weights. Nothing here changes the config; tell me the numbers to make them official.</p>
+    </details>
+    <details class="fpanel" id="fpanel">
+      <summary><b>Filter land</b> <span id="fsum">· switch criteria on to narrow the map</span></summary>
+      <div class="fpre"><span>Presets:</span><button class="btn3" data-p="strict">The Ark — strict</button><button class="btn3" data-p="relaxed">The Ark — relaxed</button><button class="btn3" data-p="estate">Quinta Skywalker</button><button class="btn3" data-p="reset">Reset all</button></div>
+      <div class="fstat" id="fstat"></div>
+      <div class="frows" id="frows"></div>
+      <div class="ftop" id="ftop"></div>
+      <p class="fnote">Filters run on 1 km blocks so they respond instantly; switched-on criteria are must-haves. Your choices stay in this browser only and never change the config.</p>
+    </details>
+    <div class="sheet" id="sheet">
+      <div class="stage" id="stage">
+        <img id="img" alt="" decoding="async">
+        <canvas id="wcv" class="fcv" hidden></canvas>
+        <canvas id="mcv" class="fcv" hidden></canvas>
+        <canvas id="scv" class="fcv"></canvas>
+        <canvas id="fcv" class="fcv" hidden></canvas>
+        <svg id="ov" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="cursor" id="cursor"></div>
+      <div class="ctls">
+        <button class="ctl" id="zin" aria-label="Zoom in">+</button>
+        <button class="ctl" id="zout" aria-label="Zoom out">−</button>
+        <button class="ctl" id="zre" aria-label="Reset view">⟲</button>
+      </div>
+      <div class="mtag" id="mtag" hidden></div>
+      <div class="scale" id="scale">Display 400 m · values 1 km</div>
+    </div>
+    <div class="sheet sheet3d" id="sheet3d" hidden><div class="loading3d" id="ld3">Loading terrain…</div>
+      <div class="exag" id="exag"><label for="ex3s">Height <input id="ex3s" type="range" min="1" max="10" step="0.5" value="5" aria-label="Height exaggeration"></label> <output id="ex3sv">×5</output></div>
+      <div class="hleg" id="hleg" hidden></div>
+      <div class="hint3">Drag to move · pinch or scroll to zoom · two-finger drag or right-drag to rotate and tilt · tap for values</div></div>
+    </div>
+    <aside class="info" id="info" aria-live="polite"></aside>
+    <aside class="info" id="scard" aria-live="polite"></aside>
+  </div>
+
+  <section class="simple sonly" aria-label="Best places">
+    <div class="shead"><h2 id="ptitle">Best places</h2></div>
+    <div class="places" id="places"></div>
+    <p class="shint">Estate sites of about 200 ha. Tap one to see it on the map. All est.</p>
+  </section>
+
+  <section class="zones" id="zones">
+    <h2>Candidate zones</h2>
+    <p class="meta" id="zmeta"></p>
+    <div class="ztable-wrap"><table class="ztable"><thead><tr>
+      <th>Rank</th><th>Zone</th><th>Where</th><th style="text-align:right">Score</th><th style="text-align:right">Worst ha</th>
+      <th>Weakest</th><th style="text-align:right">Size</th><th style="text-align:right">Drive</th><th style="text-align:right">A&amp;E</th><th>Notes</th>
+    </tr></thead><tbody id="zrows"></tbody></table></div>
+  </section>
+
+  <section class="zones" id="estates">
+    <h2>Estate sites</h2>
+    <p class="meta">About 200 ha each (blue circles on the map), ranked by the estate score: water, beauty, summer heat and rain in 2050, soil, fire, land price, quiet, Lisbon airport, high-speed rail, international school, private hospital. Blue-outlined zones fit a 15–50 ha home with room to grow. All est.; ownership not checked.</p>
+    <div class="ztable-wrap"><table class="ztable"><thead><tr>
+      <th>Site</th><th>Where</th><th style="text-align:right">Score</th><th style="text-align:right">Water</th><th style="text-align:right">Beauty</th>
+      <th style="text-align:right">Land price</th><th style="text-align:right">Airport</th><th style="text-align:right">Int. school</th><th style="text-align:right">Pvt hospital</th><th>Notes</th>
+    </tr></thead><tbody id="erows"></tbody></table></div>
+  </section>
+
+  <footer>
+    <p style="margin:0 0 8px;color:var(--ink)">Help communities become resilient and the land regenerate.</p>
+    Sources: DGT (CAOP 2025, COS 2025, fire-hazard SRUP), ICNF (burned areas, RNAP, Natura 2000), APA (aquifers, soils, flood risk),
+    CHELSA v2.1, Copernicus DEM, Eurostat Census 2021 grid, © OpenStreetMap contributors. Layers marked <b>estimate</b> are modelled or
+    approximate and are not official figures (est.). Hover values are averaged to 1 km and rounded; the analysis itself runs at 100 m.
+  </footer>
+</div>
+
+<script>
+const BRAND = { name: "Arca Homes", word: "ARCA" };   // working name: change here only
+const GROUPS = { score: "Scores", drive: "Drive", water: "Water", fire: "Fire", soil: "Soil & climate", war: "War exposure",
+  unrest: "Unrest", hazards: "Hazards", access: "Access", wellness: "Wellness & health", place: "Place",
+  climate: "Climate 2041–60", community: "Community", build: "Buildability", estate: "Estate mode",
+  limits: "Limits & rule-out" };
+const PROBE = ["overall", "ruleout", "buildability", "osrm_drive_min_from_lisbon", "aridity_index_2041_2060", "rainfall_mm",
+  "icnf_hazard_class", "soil_capability_class", "slope_pct", "hospital_drive_min", "nuisance_index", "pop_within_30km"];
+let M, BIN, cur, view = { s: 1, x: 0, y: 0 }, last = null;
+const $ = id => document.getElementById(id);
+
+const fmtNum = (v, d = 0) => v.toLocaleString("en-GB", { maximumFractionDigits: d, minimumFractionDigits: d });
+function fmt(L, v) {
+  if (v == null) return "–";
+  if (L.cats && Object.keys(L.cats).length) return L.cats[String(Math.round(v))] ?? "None";
+  if (L.unit === "m") return v >= 1000 ? fmtNum(v / 1000, v < 10000 ? 1 : 0) + " km" : fmtNum(v) + " m";
+  if (L.unit === "people") return v >= 1e6 ? fmtNum(v / 1e6, 2) + " M" : fmtNum(Math.round(v / 1000)) + " k";
+  return fmtNum(v, L.fmt) + (L.unit && !L.unit.startsWith("class") && !L.unit.startsWith("share") ? " " + L.unit : "");
+}
+
+function value(L, i) {
+  const b = M.bands.indexOf(L.key), q = BIN[b * M.grid.w10 * M.grid.h10 + i];
+  if (q === 255) return null;
+  if (L.raw) return q;
+  const v = L.q[0] + (q / 254) * (L.q[1] - L.q[0]);
+  return L.log ? Math.pow(10, v) : v;
+}
+
+function render() {
+  const L = M.layers.find(l => l.key === cur);
+  $("img").src = "layers/" + L.key + ".png";
+  if (window.on3dLayer) window.on3dLayer();
+  $("layer").value = cur;
+  let lg = "";
+  if (L.legend.type === "ramp") {
+    const t = L.legend.ticks, isLog = L.log;
+    lg = `<div class="ramp" style="background:linear-gradient(90deg,${L.legend.stops.join(",")})"></div>
+      <div class="ticks">${t.map(v => `<span>${fmt({ ...L, cats: null }, v)}</span>`).join("")}</div>
+      ${L.good ? `<div class="good">${L.good === "low" ? "Lower is better for the Ark" : "Higher is better for the Ark"}${isLog ? " · log scale" : ""}</div>` : ""}`;
+  } else {
+    const share = L.key === "ruleout";
+    lg = `<ul>${L.legend.items.map((it, i) => `<li><i style="background:${it.color}"></i><span>${it.label}</span>${
+      share ? `<span>${i === 0 ? M.stats.kept_pct : M.stats.first[M.rules[i - 1].key]}%</span>` : ""}</li>`).join("")}</ul>`;
+  }
+  const flag = L.key === "ruleout" ? `<div class="flag"><b>Keeps ${M.stats.kept_pct}% of mainland.</b> The plan expects 5–20%.
+    You chose to let scoring narrow it: steps 3–4 keep only the top 2% as candidate zones.</div>` : "";
+  $("info").innerHTML = `<div style="display:grid;gap:6px">
+      <div class="step" style="margin:0">${GROUPS[L.group]}${M.weights[L.group] ? " · weight " + M.weights[L.group] : ""}</div>
+      <h3>${L.label}</h3>${L.estimate ? `<div><span class="badge">Estimate</span></div>` : ""}</div>
+    <p class="note">${L.note}</p>
+    <div class="legend">${lg}</div>${flag}
+    ${zoneCard()}<div class="probe" id="probe"></div>`;
+  probe(last);
+}
+
+function probe(i) {
+  last = i;
+  const el = $("probe"); if (!el) return;
+  if (i == null) { el.innerHTML = `<div class="hint">Hover or tap the map to read values.</div>`; return; }
+  const m = M.bands, n = M.grid.w10 * M.grid.h10;
+  const mun = BIN[m.indexOf("mun_lo") * n + i] + 256 * BIN[m.indexOf("mun_hi") * n + i];
+  const keys = [cur, ...PROBE.filter(k => k !== cur)];
+  const rows = keys.map(k => { const L = M.layers.find(l => l.key === k);
+    return `<dt>${L.label}</dt><dd class="${k === cur ? "cur" : ""}">${fmt(L, value(L, i))}</dd>`; }).join("");
+  el.innerHTML = `<div class="where">${mun ? M.concelhos[mun - 1] : "Outside mainland"}</div><dl>${rows}</dl>`;
+}
+
+/* ---------- map interaction ---------- */
+function fit() {
+  const s = $("sheet"), g = M.grid, r = Math.min(s.clientWidth / g.w4, s.clientHeight / g.h4);
+  const st = $("stage"); st.style.width = g.w4 * r + "px"; st.style.height = g.h4 * r + "px";
+  view.base = { w: g.w4 * r, h: g.h4 * r, ox: (s.clientWidth - g.w4 * r) / 2, oy: (s.clientHeight - g.h4 * r) / 2 };
+  apply();
+}
+function apply() {
+  const b = view.base;
+  $("stage").style.transform = `translate(${b.ox + view.x}px,${b.oy + view.y}px) scale(${view.s})`;
+  $("scale").textContent = view.s >= 2.5 ? "Values averaged to 1 km" : "Display 400 m · values 1 km";
+}
+function zoom(f, cx, cy) {
+  const s = $("sheet"); cx ??= s.clientWidth / 2; cy ??= s.clientHeight / 2;
+  const ns = Math.min(12, Math.max(1, view.s * f)), k = ns / view.s, b = view.base;
+  view.x = cx - b.ox - (cx - b.ox - view.x) * k; view.y = cy - b.oy - (cy - b.oy - view.y) * k; view.s = ns;
+  apply();
+}
+function cellAt(e) {
+  const r = $("img").getBoundingClientRect(), g = M.grid;
+  const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+  if (fx < 0 || fy < 0 || fx >= 1 || fy >= 1) return null;
+  const c = Math.floor(fx * g.w10), rr = Math.floor(fy * g.h10);
+  if (c >= g.w10 || rr >= g.h10) return null;
+  const i = rr * g.w10 + c;
+  return BIN[M.bands.indexOf("mun_lo") * g.w10 * g.h10 + i] + BIN[M.bands.indexOf("mun_hi") * g.w10 * g.h10 + i] ? i : null;
+}
+function wire() {
+  const s = $("sheet"), cu = $("cursor"); let drag = null, moved = false; const pts = new Map(); let pinch = null;
+  const mid = () => { const [a, b] = [...pts.values()], r = s.getBoundingClientRect();
+    return { x: (a.clientX + b.clientX) / 2 - r.left, y: (a.clientY + b.clientY) / 2 - r.top, d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) }; };
+  const startDrag = e => { drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; };
+  s.addEventListener("pointerdown", e => { if (e.target.closest(".ctls")) return;   // buttons keep their own taps
+    s.setPointerCapture(e.pointerId); pts.set(e.pointerId, e);
+    startDrag(e); moved = false; $("stage").classList.add("drag");
+    if (pts.size === 2) { const m = mid(); pinch = { d: m.d, s: view.s, x: m.x, y: m.y }; moved = true; } });
+  s.addEventListener("pointermove", e => {
+    if (pts.has(e.pointerId)) pts.set(e.pointerId, e);
+    if (pinch && pts.size === 2) {                     // two fingers: zoom about the midpoint AND move with it
+      const m = mid(); zoom((pinch.s * m.d / pinch.d) / view.s, m.x, m.y);
+      view.x += m.x - pinch.x; view.y += m.y - pinch.y; pinch.x = m.x; pinch.y = m.y; apply(); return; }
+    if (drag && pts.size === 1) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y;   // one finger / mouse: drag at any zoom
+      if (moved || Math.abs(dx) + Math.abs(dy) > 4) { moved = true; view.x = drag.vx + dx; view.y = drag.vy + dy; apply(); } }
+    const i = cellAt(e), r = s.getBoundingClientRect();
+    if (i != null && e.pointerType === "mouse") { cu.style.display = "block"; cu.style.left = e.clientX - r.left + "px"; cu.style.top = e.clientY - r.top + "px"; probe(i); }
+    else if (e.pointerType === "mouse") cu.style.display = "none";
+  });
+  const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
+    if (pts.size === 1) { startDrag([...pts.values()][0]); return; }       // lifted one finger of a pinch: keep dragging
+    $("stage").classList.remove("drag");
+    if (drag && !moved) { const els = document.elementsFromPoint(e.clientX, e.clientY);
+      const pin = els.find(el => el.matches && el.matches("circle.lp"));
+      if (pin && window.showListing) { drag = null; window.showListing(+pin.dataset.l); return; }   // tap on a listing pin
+      const hit = els.find(el => el.matches && el.matches("path.z"));
+      if (hit) { drag = null; flyZone(hit.dataset.z); return; }          // tap on a zone outline
+      const i = cellAt(e), r = s.getBoundingClientRect();
+      if (i != null) { cu.style.display = "block"; cu.style.left = e.clientX - r.left + "px"; cu.style.top = e.clientY - r.top + "px"; probe(i); } }
+    drag = null; };
+  s.addEventListener("pointerup", up); s.addEventListener("pointercancel", up);
+  s.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") cu.style.display = "none"; });
+  s.addEventListener("wheel", e => { e.preventDefault(); const r = s.getBoundingClientRect();
+    zoom(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+  const animZoom = f => { $("stage").classList.add("anim"); zoom(f); setTimeout(() => $("stage").classList.remove("anim"), 220); };
+  $("zin").onclick = () => animZoom(1.6); $("zout").onclick = () => animZoom(1 / 1.6);
+  $("zre").onclick = () => { view = { s: 1, x: 0, y: 0, base: view.base }; apply(); };
+  addEventListener("resize", fit);
+}
+
+let selZone = null;
+const NICE = { water: "Water", drive: "Drive", fire: "Fire", soil: "Soil", war: "War", unrest: "Unrest", hazards: "Mining",
+  access: "Access", wellness: "Wellness", place: "Place", climate: "Climate", community: "Community" };
+function zoneNotes(z) {
+  return [z.ruin ? "ruin" : "", z.ren_nc ? "REN not checked" : "", z.nuisance !== "none" ? z.nuisance.replace("_", " ") + " near" : ""]
+    .filter(Boolean).map(t => `<span class="tag">${t}</span>`).join("");
+}
+function buildZones() {
+  if (!M.zones) { $("zones").hidden = true; return; }
+  const r = M.zones_report;
+  $("zmeta").textContent = `${r.zones} zones, ${fmtNum(r.zone_ha_total)} ha. Top ${r.top_pct}% of scored hectares (score ≥ ${r.score_threshold}), ` +
+    `at least 5 ha joined together, each with a buildable patch. Showing the top 25; all are outlined on the map. Click a row or outline to fly there.`;
+  $("zrows").innerHTML = M.zones.slice(0, 25).map(z => `<tr data-z="${z.id}"><td class="n">${z.rank}</td><td><b>${z.id}</b></td>
+    <td>${z.concelho}<br><span style="color:var(--muted);font-size:14px">${z.freguesia}</span></td>
+    <td class="n">${z.score.toFixed(1)}</td><td class="n">${z.min.toFixed(1)}</td><td>${NICE[z.worst] || z.worst}</td>
+    <td class="n">${fmtNum(z.ha)} ha</td><td class="n">${z.drive} min</td><td class="n">${z.hospital} min</td><td>${zoneNotes(z)}</td></tr>`).join("");
+  $("zrows").addEventListener("click", e => { const tr = e.target.closest("tr"); if (tr) flyZone(tr.dataset.z); });
+  $("ov").addEventListener("click", e => { const p = e.target.closest("path.z"); if (p) { e.stopPropagation(); flyZone(p.dataset.z); } });
+}
+function buildEstates() {
+  const E = M.estates || []; if (!E.length) { $("estates").hidden = true; return; }
+  $("erows").innerHTML = E.map(e => `<tr data-e="${e.id}"><td><b>${e.id}</b></td><td>${e.concelho}<br><span style="color:var(--muted);font-size:14px">${e.freguesia}</span></td>
+    <td class="n">${e.score.toFixed(1)}</td><td class="n">${e.water}</td><td class="n">${e.place}</td><td class="n">${e.price}</td>
+    <td class="n">${e.airport} min</td><td class="n">${e.school} min</td><td class="n">${e.hosp} min</td>
+    <td>${e.zone ? `<span class="tag">near ${e.zone}</span>` : ""}${e.natura > 0.2 ? `<span class="tag">Natura ${Math.round(e.natura * 100)}%</span>` : ""}<span class="tag">HS station ${e.hs} min</span>${e.rail_km < 1 ? `<span class="tag">railway ${e.rail_km} km</span>` : ""}${e.hs_conc ? `<span class="tag">HS line planned in concelho</span>` : ""}</td></tr>`).join("");
+  $("erows").addEventListener("click", e => { const tr = e.target.closest("tr"); if (tr) flyEstate(tr.dataset.e); });
+  $("ov").addEventListener("click", e => { const c = e.target.closest("circle.es"); if (c) { e.stopPropagation(); flyEstate(c.dataset.e); } });
+}
+function flyEstate(id) {
+  const z = (M.estates || []).find(q => q.id === id); if (!z) return;
+  document.querySelectorAll("circle.es").forEach(c => c.classList.toggle("sel", c.dataset.e === id));
+  document.querySelectorAll("#erows tr").forEach(r => r.classList.toggle("sel", r.dataset.e === id));
+  if (M.layers.some(l => l.key === "community_score")) cur = "community_score";
+  const s = $("sheet"), b = view.base, k = 7;
+  view.s = k; view.x = s.clientWidth / 2 - b.ox - (z.cx / M.grid.w4) * b.w * k; view.y = s.clientHeight / 2 - b.oy - (z.cy / M.grid.h4) * b.h * k;
+  apply(); s.scrollIntoView({ behavior: "smooth", block: "center" }); render();
+}
+function flyZone(id) {
+  const z = M.zones.find(q => q.id === id); if (!z) return;
+  selZone = z;
+  document.querySelectorAll("path.z").forEach(p => p.classList.toggle("sel", p.dataset.z === id));
+  document.querySelectorAll("#zrows tr").forEach(r => r.classList.toggle("sel", r.dataset.z === id));
+  const s = $("sheet"), b = view.base, k = z.ha > 2000 ? 3 : 7;
+  view.s = k; view.x = s.clientWidth / 2 - b.ox - (z.cx / M.grid.w4) * b.w * k; view.y = s.clientHeight / 2 - b.oy - (z.cy / M.grid.h4) * b.h * k;
+  apply(); s.scrollIntoView({ behavior: "smooth", block: "center" }); render();
+}
+function zoneCard() {
+  const z = selZone; if (!z) return "";
+  return `<div class="zcard"><h4>${z.id} · ${z.concelho}</h4>
+    <div style="color:var(--muted);font-size:15px">${z.freguesia} · ${fmtNum(z.ha)} ha · rank ${z.rank}</div>
+    <dl style="margin:0;display:grid;grid-template-columns:1fr auto;gap:3px 14px">
+      <dt>Mean score</dt><dd style="margin:0;font-family:var(--f-data)">${z.score.toFixed(1)}</dd>
+      <dt>Worst hectare</dt><dd style="margin:0;font-family:var(--f-data)">${z.min.toFixed(1)}</dd>
+      <dt>Weakest criterion</dt><dd style="margin:0">${NICE[z.worst] || z.worst}</dd>
+      <dt>Largest buildable patch</dt><dd style="margin:0;font-family:var(--f-data)">${z.build} ha</dd>
+      <dt>Drive from Lisbon</dt><dd style="margin:0;font-family:var(--f-data)">${z.drive} min</dd>
+      <dt>Nearest A&amp;E</dt><dd style="margin:0;font-family:var(--f-data)">${z.hospital} min</dd></dl>
+    <div>${zoneNotes(z)}</div></div>`;
+}
+
+function build() {
+  const k = M.stats;
+  $("kpis").innerHTML = [
+    [fmtNum(k.land_ha / 100) + " km²", "mainland, " + fmtNum(k.land_ha / 1e6, 1) + " M hectares"],
+    [M.layers.length - 1 + "", "layers"],
+    [(M.zones || []).length + "", "candidate zones", "xonly"]].map(([b, s, c]) => `<div class="kpi ${c || ""}"><b>${b}</b><span>${s}</span></div>`).join("");
+  const sel = $("layer");
+  for (const [g, name] of Object.entries(GROUPS)) {
+    const ls = M.layers.filter(l => l.group === g); if (!ls.length) continue;
+    sel.insertAdjacentHTML("beforeend", `<optgroup label="${name}${M.weights[g] ? ` · weight ${M.weights[g]}` : ""}">${
+      ls.map(l => `<option value="${l.key}">${l.label}${l.estimate ? " (estimate)" : ""}</option>`).join("")}</optgroup>`);
+  }
+  sel.addEventListener("change", () => { cur = sel.value;
+    try { localStorage.setItem("arca-layer-v3", cur); } catch {} render(); });
+  const g = M.grid, ov = $("ov");
+  ov.setAttribute("viewBox", `0 0 ${g.w4} ${g.h4}`);
+  ov.innerHTML = M.districts.map(d => `<path class="d" d="${d}"/>`).join("") +
+    (M.zones || []).map(z => `<path class="z${z.rank <= 10 ? " top" : ""}${z.home ? " home" : ""}" data-z="${z.id}" d="${z.d}"><title>${z.id} · ${z.concelho} · ${z.score}</title></path>`).join("") +
+    (M.estates || []).map(e => `<circle class="es" data-e="${e.id}" cx="${e.cx}" cy="${e.cy}" r="${e.r}"><title>${e.id} · ${e.concelho} · ${e.score}</title></circle><text class="esl" x="${e.cx + e.r + 1}" y="${e.cy + 3}">${e.id}</text>`).join("") +
+    `<circle class="lis" cx="${M.lisbon[0]}" cy="${M.lisbon[1]}" r="5"><title>Lisboa — drive-time origin</title></circle>`;
+  buildZones(); buildEstates();
+  let saved = null; try { saved = localStorage.getItem("arca-layer-v3"); } catch {}
+  cur = M.layers.some(l => l.key === saved) ? saved : "overall";
+  wire(); fit(); render();
+}
+
+Promise.all([fetch("meta.json").then(r => r.json()), fetch("readout.json").then(r => r.json())])
+  .then(([m, b]) => { M = m; BIN = Uint8Array.from(atob(b.b64), c => c.charCodeAt(0)); build(); })
+  .catch(err => { $("info").innerHTML = `<p class="note">The map data did not load (${err.message}). Reload the page to try again.</p>`; });
+</script>
+
+<script>
+/* ---------- 3D terrain mode (v4b): national 400 m mesh + top-20 zone boxes at 20 m ---------- */
+(() => {
+  const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js";
+  const ORBIT_URL = "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js";
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const loadScript = src => new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => no(new Error(src)); document.head.appendChild(s); });
+  const img = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error(src)); i.src = src; });
+  const S = { ready: false, mode: "nat", zone: null, ext: null, demNat: null, labels: [] };
+  const mobile = Math.min(innerWidth, innerHeight) < 700;
+
+  function decode(im, step) {                         // 2-byte RGB → metres; optional downsample
+    const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
+    const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(im, 0, 0);
+    const px = g.getImageData(0, 0, im.width, im.height).data;
+    const w = Math.ceil(im.width / step), h = Math.ceil(im.height / step), z = new Float32Array(w * h), land = new Uint8Array(w * h);
+    for (let r = 0; r < h; r++) for (let q = 0; q < w; q++) { const i = (r * step * im.width + q * step) * 4;
+      z[r * w + q] = (px[i] * 256 + px[i + 1]) * 0.1 - 50; land[r * w + q] = px[i + 2] > 127 ? 1 : 0; }
+    return { w, h, z, land };
+  }
+
+  async function init() {
+    await loadScript(THREE_URL); await loadScript(ORBIT_URL);
+    const st = $("sheet3d");
+    S.renderer = new THREE.WebGLRenderer({ antialias: !mobile, alpha: true });
+    S.renderer.outputEncoding = THREE.sRGBEncoding;
+    S.renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.5 : 2));
+    st.prepend(S.renderer.domElement);
+    S.scene = new THREE.Scene();
+    S.camera = new THREE.PerspectiveCamera(40, 1, 0.05, 6000);
+    S.controls = new THREE.OrbitControls(S.camera, S.renderer.domElement);
+    S.controls.enableDamping = true; S.controls.maxPolarAngle = Math.PI * 0.48;
+    S.controls.screenSpacePanning = false;                       // pan across the ground, like a map
+    S.controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+    S.controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };   // drag = move, pinch = zoom, two-finger drag = rotate/tilt
+    S.scene.add(new THREE.HemisphereLight(0xffffff, 0x334433, 0.75));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.1); sun.position.set(-300, 260, -220); S.scene.add(sun);
+    S.tex = new THREE.CanvasTexture(S.canvas = document.createElement("canvas")); S.tex.encoding = THREE.sRGBEncoding;
+    S.mat = new THREE.MeshStandardMaterial({ map: S.tex, roughness: 1, metalness: 0, transparent: true, alphaTest: 0.5 });
+    S.ext = await fetch("zone3d/extent.json").then(r => r.json());
+    $("zsel").insertAdjacentHTML("beforeend", S.ext.zones.map(z => `<option value="${z.rank}">${z.id} · ${z.concelho} (${z.ha.toLocaleString("en-GB")} ha)</option>`).join(""));
+    S.demNat = decode(await img("dem_national.png"), mobile ? 2 : 1);
+    S.renderer.domElement.addEventListener("pointerdown", e => { S.down = [e.clientX, e.clientY]; });
+    S.renderer.domElement.addEventListener("pointerup", e => { if (S.down && Math.hypot(e.clientX - S.down[0], e.clientY - S.down[1]) < 5) pick(e); });
+    new ResizeObserver(size).observe(st);
+    (function loop() { requestAnimationFrame(loop); if (!$("sheet3d").hidden) { S.controls.update(); S.renderer.render(S.scene, S.camera); place(); } })();
+    S.ready = true;
+  }
+
+  function size() { const st = $("sheet3d"); if (!st.clientWidth) return; S.renderer.setSize(st.clientWidth, st.clientHeight); S.camera.aspect = st.clientWidth / st.clientHeight; S.camera.updateProjectionMatrix(); }
+
+  // --- build a mesh for the current area
+  function buildMesh(d, wKm, hKm) {
+    if (S.mesh) { S.scene.remove(S.mesh); S.mesh.geometry.dispose(); }
+    const g = new THREE.PlaneGeometry(wKm, hKm, d.w - 1, d.h - 1); g.rotateX(-Math.PI / 2);
+    S.mesh = new THREE.Mesh(g, S.mat); S.scene.add(S.mesh); S.dem = d; S.wKm = wKm; S.hKm = hKm; heights();
+  }
+  function heights() {
+    const ex = +$("ex3").value, p = S.mesh.geometry.attributes.position, z = S.dem.z, base = S.mode === "zone" ? S.zone.elev_min : 0;
+    for (let i = 0; i < p.count; i++) p.setY(i, (Math.max(z[i], -5) - base) * ex / 1000);
+    p.needsUpdate = true; S.mesh.geometry.computeVertexNormals();
+    $("ex3v").textContent = ex.toFixed(1);
+    $("ex3s").value = ex; $("ex3sv").textContent = ex === 1 ? "true" : "×" + (+ex.toFixed(1));
+  }
+  const world = (u, v) => { const d = S.dem, q = Math.min(d.w - 1, Math.floor(u * d.w)), r = Math.min(d.h - 1, Math.floor(v * d.h)),
+    base = S.mode === "zone" ? S.zone.elev_min : 0;
+    return new THREE.Vector3((u - .5) * S.wKm, (Math.max(d.z[r * d.w + q], 0) - base) * +$("ex3").value / 1000, (v - .5) * S.hKm); };
+
+  // --- drape: national = current explorer layer + zones; zone = chosen zone drape + zone outline
+  // hypsometric tint: green lowlands → ochre → brown → pale peaks, with contour bands
+  const RAMP = [[0, [64, 125, 82]], [0.15, [128, 168, 92]], [0.35, [214, 200, 120]], [0.6, [176, 120, 72]], [0.85, [130, 96, 80]], [1, [236, 232, 226]]];
+  const rampAt = t => { for (let i = 1; i < RAMP.length; i++) if (t <= RAMP[i][0]) { const [a, ca] = RAMP[i - 1], [b, cb] = RAMP[i], f = (t - a) / (b - a);
+    return ca.map((v, k) => Math.round(v + (cb[k] - v) * f)); } return RAMP.at(-1)[1]; };
+  function heightCanvas() {
+    const d = S.dem, nat = S.mode === "nat", lo = nat ? 0 : S.zone.elev_min, hi = nat ? 1500 : Math.max(S.zone.elev_max, lo + 20);
+    const step = nat ? 100 : (hi - lo > 150 ? 20 : 10);
+    const c = document.createElement("canvas"); c.width = d.w; c.height = d.h;
+    const g = c.getContext("2d"), id = g.createImageData(d.w, d.h);
+    for (let r = 0; r < d.h; r++) for (let q = 0; q < d.w; q++) {
+      const i = r * d.w + q; if (nat && !S.demNat.land[i]) continue;
+      const z = d.z[i], band = Math.floor(z / step), col = rampAt(Math.min(1, Math.max(0, (band * step - lo) / (hi - lo))));
+      const edge = (q + 1 < d.w && Math.floor(d.z[i + 1] / step) !== band) || (r + 1 < d.h && Math.floor(d.z[i + d.w] / step) !== band);
+      id.data.set(edge ? col.map(v => v * 0.55) : col, i * 4); id.data[i * 4 + 3] = 255; }
+    g.putImageData(id, 0, 0);
+    const stops = Array.from({ length: 6 }, (_, k) => `rgb(${rampAt(k / 5).join(",")})`).join(",");
+    $("hleg").innerHTML = `<b>Height colours</b><div class="bar" style="background:linear-gradient(90deg,${stops})"></div>
+      <div class="tk"><span>${Math.round(lo)} m</span><span>${Math.round(hi)} m</span></div><span style="color:var(--muted)">Lines every ${step} m</span>`;
+    return c;
+  }
+
+  function refreshTex() {                            // canvas size can change → new GPU texture each time
+    if (S.tex) S.tex.dispose();
+    S.tex = new THREE.CanvasTexture(S.canvas); S.tex.encoding = THREE.sRGBEncoding;
+    S.tex.anisotropy = S.renderer.capabilities.getMaxAnisotropy(); S.mat.map = S.tex; S.mat.needsUpdate = true;
+  }
+
+  async function drape() {
+    const c = S.canvas, g = c.getContext("2d"), hc = $("hc").checked;
+    $("hleg").hidden = !hc;
+    if (hc) {
+      const h = heightCanvas(); c.width = h.width * 2; c.height = h.height * 2; g.imageSmoothingEnabled = false;
+      g.clearRect(0, 0, c.width, c.height); g.drawImage(h, 0, 0, c.width, c.height); g.imageSmoothingEnabled = true;
+      if (S.mode === "nat" && M.zones) { g.fillStyle = "rgba(232,116,44,.9)"; g.save(); g.scale(c.width / M.grid.w4, c.height / M.grid.h4);
+        for (const z of M.zones) g.fill(new Path2D(z.d)); g.restore(); }
+      if (S.mode === "zone") g.drawImage(await img(`zone3d/zone_${S.zone.rank}_zone.webp`), 0, 0, c.width, c.height);
+      refreshTex(); return;
+    }
+    if (S.mode === "nat") {
+      const L = await img("layers/" + cur + ".png");
+      c.width = L.width * 2; c.height = L.height * 2; g.clearRect(0, 0, c.width, c.height);
+      const m = document.createElement("canvas"); m.width = S.demNat.w; m.height = S.demNat.h;
+      const mg = m.getContext("2d"), id = mg.createImageData(m.width, m.height), rgb = css("--rule").match(/\w\w/g).map(h => parseInt(h, 16));
+      for (let i = 0; i < S.demNat.land.length; i++) if (S.demNat.land[i]) id.data.set([...rgb, 255], i * 4);
+      mg.putImageData(id, 0, 0); g.drawImage(m, 0, 0, c.width, c.height);
+      const easy = document.body.classList.contains("easy"), sc = easy && window.simpleCanvas ? window.simpleCanvas() : null;
+      if (sc) { g.imageSmoothingEnabled = false; g.drawImage(sc, 0, 0, c.width, c.height); g.imageSmoothingEnabled = true; } else g.drawImage(L, 0, 0, c.width, c.height);
+      const fcv = !document.body.classList.contains("easy") && window.filterCanvas && window.filterCanvas(); if (fcv) { g.imageSmoothingEnabled = false; g.drawImage(fcv, 0, 0, c.width, c.height); g.imageSmoothingEnabled = true; }
+      if (M.zones && !easy) { g.fillStyle = "rgba(232,116,44,.85)"; const sx = c.width / M.grid.w4, sy = c.height / M.grid.h4;
+        g.save(); g.scale(sx, sy); for (const z of M.zones) g.fill(new Path2D(z.d)); g.restore(); }
+    } else {
+      const n = S.zone.rank, k = $("zdrape").value;
+      const [hs, lay, zo] = await Promise.all([img(`zone3d/zone_${n}_hillshade.webp`), k === "hillshade" ? null : img(`zone3d/zone_${n}_${k}.webp`), img(`zone3d/zone_${n}_zone.webp`)]);
+      c.width = hs.width * 2; c.height = hs.height * 2; g.globalAlpha = 1; g.drawImage(hs, 0, 0, c.width, c.height);
+      if (lay) { g.globalAlpha = k === "flow" ? 1 : 0.78; g.drawImage(lay, 0, 0, c.width, c.height); }
+      g.globalAlpha = 1; g.drawImage(zo, 0, 0, c.width, c.height);
+    }
+    refreshTex();
+  }
+
+  async function showNational() {
+    S.mode = "nat"; S.zone = null; $("zdl").hidden = true; $("ex3").value = 5;
+    const w = M.grid.w4 * 0.4, h = M.grid.h4 * 0.4;
+    buildMesh(S.demNat, w, h); await drape(); labels(); resetView();
+  }
+  async function showZone(rank) {
+    const z = S.ext.zones.find(q => q.rank === +rank); S.mode = "zone"; S.zone = z; $("zdl").hidden = false; $("ex3").value = 3;
+    const d = decode(await img(`zone3d/zone_${z.rank}_dem.png`), mobile ? 2 : 1);
+    const km = (z.box[2] - z.box[0]) / 1000;
+    buildMesh(d, km, km); await drape(); labels(); resetView();
+  }
+  function resetView() {
+    if (S.mode === "nat") { S.controls.target.set(0, 0, 40); S.camera.position.set(-260, 520, 520); }
+    else { const k = S.wKm; S.controls.target.set(0, 0, 0); S.camera.position.set(-k * 0.55, k * 0.75, k * 0.95); }
+    S.controls.minDistance = S.mode === "nat" ? 3 : 0.2; S.controls.maxDistance = S.mode === "nat" ? 1500 : S.wKm * 4; S.controls.update();
+  }
+
+  // --- labels: top 10 zones nationally, the zone id in zone mode
+  function labels() {
+    S.labels.forEach(l => l.el.remove()); S.labels = [];
+    const list = S.mode === "nat" ? (M.zones || []).slice(0, 10).map(z => ({ z, u: z.cx / M.grid.w4, v: z.cy / M.grid.h4 }))
+      : [{ z: { id: S.zone.id }, u: .5, v: .5 }];
+    for (const it of list) { const el = document.createElement("div"); el.className = "lbl3"; el.textContent = it.z.id;
+      if (S.mode === "nat") el.onclick = () => { $("zsel").value = String(it.z.rank <= 20 ? it.z.rank : ""); if (it.z.rank <= 20) showZone(it.z.rank); };
+      $("sheet3d").appendChild(el); S.labels.push({ ...it, el }); }
+  }
+  function place() {
+    const st = $("sheet3d"), w = st.clientWidth, h = st.clientHeight;
+    for (const l of S.labels) { const p = world(l.u, l.v).project(S.camera), vis = p.z < 1 && Math.abs(p.x) < 1.05 && Math.abs(p.y) < 1.05;
+      l.el.style.display = vis ? "block" : "none"; if (vis) { l.el.style.left = (p.x + 1) / 2 * w + "px"; l.el.style.top = (1 - p.y) / 2 * h + "px"; } }
+  }
+
+  // --- tap → the same values panel as 2D
+  function pick(e) {
+    const r = S.renderer.domElement.getBoundingClientRect(), ray = new THREE.Raycaster();
+    ray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -(e.clientY - r.top) / r.height * 2 + 1 }, S.camera);
+    const hit = ray.intersectObject(S.mesh)[0]; if (!hit) return;
+    const u = hit.uv.x, v = 1 - hit.uv.y; let col, row;
+    if (S.mode === "nat") { col = Math.floor(u * M.grid.w10); row = Math.floor(v * M.grid.h10); }
+    else { const b = S.zone.box, x = b[0] + u * (b[2] - b[0]), y = b[3] - v * (b[3] - b[1]);
+      col = Math.floor((x - M.grid.x0) / 1000); row = Math.floor((M.grid.y1 - y) / 1000); }
+    if (col < 0 || row < 0 || col >= M.grid.w10 || row >= M.grid.h10) return;
+    probe(row * M.grid.w10 + col);
+  }
+
+  async function setMode(three) {
+    $("m2d").setAttribute("aria-pressed", String(!three)); $("m3d").setAttribute("aria-pressed", String(three));
+    $("sheet").hidden = three; $("sheet3d").hidden = !three; document.querySelector(".m3only").hidden = !three;
+    if (!three) { fit(); return; }
+    try { if (!S.ready) { await init(); size(); await showNational(); $("ld3").remove(); } else size(); }
+    catch (err) { $("ld3").textContent = "3D did not load (" + err.message + "). Reload to try again."; }
+  }
+  $("m2d").onclick = () => setMode(false); $("m3d").onclick = () => setMode(true);
+  $("zsel").onchange = e => e.target.value ? showZone(e.target.value) : showNational();
+  $("zdrape").onchange = drape;
+  $("hc").onchange = () => S.ready && drape();
+  $("ex3").oninput = () => S.mesh && heights();
+  $("ex3s").oninput = e => { $("ex3").value = e.target.value; if (S.mesh) heights(); };
+  ["pointerdown", "wheel", "touchstart"].forEach(t => $("exag").addEventListener(t, e => e.stopPropagation()));
+  $("r3").onclick = () => S.ready && resetView();
+  window.on3dLayer = () => { if (S.ready && S.mode === "nat" && !$("sheet3d").hidden) drape(); };
+})();
+</script>
+
+<script>
+/* ---------- Filter panel (v5): switch criteria on, slide thresholds, watch the map narrow ---------- */
+(() => {
+  // key · label · op · min · max · step · default · unit · display scale
+  const F = [
+    ["ruleout", "Passed the rule-out", "pass", 0, 0, 1, 0, "", 1],
+    ["overall", "Overall score at least", ">=", 40, 85, 1, 70, "/100", 1],
+    ["osrm_drive_min_from_lisbon", "Drive from Lisbon at most", "<=", 30, 180, 5, 120, "min", 1],
+    ["aridity_index_2041_2060", "Aridity 2041–60 at least", ">=", 0.4, 1.3, 0.05, 0.6, "", 1],
+    ["rainfall_mm", "Rainfall at least", ">=", 400, 1600, 50, 650, "mm", 1],
+    ["lake_site", "Lake-site valleys at least", ">=", 0, 0.15, 0.01, 0.03, "", 1],
+    ["icnf_hazard_class", "Fire hazard class at most", "<=", 1, 5, 0.5, 3, "", 1],
+    ["fuel_2km_east", "Fuel within 2 km at most", "<=", 0, 0.8, 0.05, 0.4, "", 1],
+    ["slope_pct", "Slope at most", "<=", 2, 35, 1, 20, "%", 1],
+    ["relief_1km_m", "Relief within 1 km at least", ">=", 0, 200, 5, 20, "m", 1],
+    ["native_wood_500m", "Native woodland nearby at least", ">=", 0, 0.5, 0.01, 0.05, "", 1],
+    ["july_tmax_2050", "July heat 2041–60 at most", "<=", 26, 36, 0.5, 32, "°C", 1],
+    ["jan_tmin_2050", "January cold 2041–60 at least", ">=", -2, 8, 0.5, 2, "°C", 1],
+    ["dist_coast_m", "Coast within", "<=", 2000, 100000, 1000, 30000, "km", 0.001],
+    ["hospital_drive_min", "A&E within", "<=", 5, 60, 5, 30, "min", 1],
+    ["nuisance_index", "Nuisance at most", "<=", 0, 1, 0.05, 0.3, "", 1],
+    ["village_dist_m", "Village within", "<=", 500, 10000, 500, 3000, "km", 0.001],
+    ["ren_frac", "REN share at most", "<=", 0, 1, 0.05, 0.5, "", 1],
+    ["natura2000", "Outside Natura 2000", "zero", 0, 0, 1, 0, "", 1],
+    ["buildability", "Has an existing building (rehab)", "eq1", 0, 0, 1, 0, "", 1],
+    ["zones", "Inside a candidate zone", "zone", 0, 0, 1, 0, "", 1],
+  ];
+  const PRESETS = {
+    strict: { ruleout: 1, overall: 72, osrm_drive_min_from_lisbon: 100, aridity_index_2041_2060: 0.65, icnf_hazard_class: 3,
+      fuel_2km_east: 0.35, slope_pct: 20, relief_1km_m: 20, july_tmax_2050: 32, hospital_drive_min: 30, nuisance_index: 0.25, ren_frac: 0.5 },
+    relaxed: { ruleout: 1, overall: 65, osrm_drive_min_from_lisbon: 150, aridity_index_2041_2060: 0.55, icnf_hazard_class: 4,
+      fuel_2km_east: 0.5, slope_pct: 25, hospital_drive_min: 45 },
+    estate: { ruleout: 1, overall: 60, osrm_drive_min_from_lisbon: 180, aridity_index_2041_2060: 0.55, slope_pct: 25, fuel_2km_east: 0.5,
+      village_dist_m: 8000 },
+  };
+  const st = {}; let land = null, zoneCells = null;
+  const L = k => M.layers.find(l => l.key === k);
+  const fmtv = (f, v) => f[7] === "km" ? (v * f[8]).toFixed(v * f[8] < 10 ? 1 : 0) + " km" : (f[5] < 1 ? (+v).toFixed(2) : Math.round(v)) + (f[7] && f[7] !== "km" ? " " + f[7] : "");
+  try { Object.assign(st, JSON.parse(localStorage.getItem("arca-filters") || "{}")); } catch {}
+
+  function setup() {
+    const n = M.grid.w10 * M.grid.h10, lo = M.bands.indexOf("mun_lo"), hi = M.bands.indexOf("mun_hi");
+    land = new Uint8Array(n); for (let i = 0; i < n; i++) land[i] = (BIN[lo * n + i] || BIN[hi * n + i]) ? 1 : 0;
+    zoneCells = new Uint8Array(n);
+    // zone cells at 1 km: rasterise zone outlines (400 m pixel space) onto the 1 km grid
+    const c = document.createElement("canvas"); c.width = M.grid.w10; c.height = M.grid.h10; const g = c.getContext("2d");
+    g.scale(M.grid.w10 / M.grid.w4, M.grid.h10 / M.grid.h4); g.fillStyle = "#000"; for (const z of (M.zones || [])) g.fill(new Path2D(z.d));
+    const d = g.getImageData(0, 0, M.grid.w10, M.grid.h10).data; for (let i = 0; i < n; i++) zoneCells[i] = d[i * 4 + 3] > 40 ? 1 : 0;
+    const fc = $("fcv"); fc.width = M.grid.w10; fc.height = M.grid.h10;
+    $("frows").innerHTML = F.filter(f => f[2] === "pass" || f[2] === "zone" || L(f[0])).map((f, j) => {
+      const id = "f_" + f[0], on = st[f[0]] !== undefined, v = on ? st[f[0]] : f[6], slider = !["pass", "zero", "eq1", "zone"].includes(f[2]);
+      return `<div class="frow ${on ? "" : "off"}" data-k="${f[0]}"><input type="checkbox" id="${id}" ${on ? "checked" : ""}>
+        <label for="${id}">${f[1]}</label><output id="${id}_o">${slider ? fmtv(f, v) : ""}</output>
+        ${slider ? `<input type="range" id="${id}_r" min="${f[3]}" max="${f[4]}" step="${f[5]}" value="${v}" aria-label="${f[1]}">` : ""}</div>`; }).join("");
+    $("frows").addEventListener("input", e => {
+      const row = e.target.closest(".frow"); if (!row) return; const k = row.dataset.k, f = F.find(q => q[0] === k);
+      const cb = row.querySelector("input[type=checkbox]"), r = row.querySelector("input[type=range]");
+      if (e.target === r && !cb.checked) cb.checked = true;
+      if (cb.checked) st[k] = r ? +r.value : 1; else delete st[k];
+      row.classList.toggle("off", !cb.checked); if (r) $("f_" + k + "_o").textContent = fmtv(f, +r.value);
+      apply();
+    });
+    document.querySelector(".fpre").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+      for (const k in st) delete st[k]; if (b.dataset.p !== "reset") Object.assign(st, PRESETS[b.dataset.p]);
+      document.querySelectorAll(".frow").forEach(row => { const k = row.dataset.k, f = F.find(q => q[0] === k), on = st[k] !== undefined;
+        row.querySelector("input[type=checkbox]").checked = on; row.classList.toggle("off", !on);
+        const r = row.querySelector("input[type=range]"); if (r) { r.value = on ? st[k] : f[6]; $("f_" + k + "_o").textContent = fmtv(f, +r.value); } });
+      apply(); });
+    $("ftop").addEventListener("click", e => { const b = e.target.closest("button"); if (b) flyZone(b.dataset.z); });
+    apply();
+  }
+
+  function pass(f, i) {
+    const k = f[0];
+    if (f[2] === "zone") return zoneCells[i] === 1;
+    const v = value(L(k), i);
+    if (f[2] === "pass") return v === 0;
+    if (f[2] === "zero") return v == null || Math.round(v) === 0;
+    if (f[2] === "eq1") return v != null && Math.round(v) === 1;
+    if (v == null) return false;
+    return f[2] === ">=" ? v >= st[k] : v <= st[k];
+  }
+
+  function apply() {
+    try { localStorage.setItem("arca-filters", JSON.stringify(st)); } catch {}
+    const act = F.filter(f => st[f[0]] !== undefined && (f[2] === "zone" || L(f[0])));
+    const n = M.grid.w10 * M.grid.h10, fc = $("fcv"), g = fc.getContext("2d"), img = g.createImageData(fc.width, fc.height);
+    const fails = act.map(() => 0); let left = 0, total = 0;          // fails = land held back by THIS filter alone
+    for (let i = 0; i < n; i++) { if (!land[i]) continue; total++;
+      let nf = 0, last = -1; for (let j = 0; j < act.length; j++) if (!pass(act[j], i)) { nf++; last = j; }
+      if (nf === 1) fails[last]++;
+      if (nf === 0) left++; else img.data.set([24, 30, 27, 190], i * 4); }
+    g.putImageData(img, 0, 0); fc.hidden = act.length === 0;
+    document.querySelectorAll(".frow").forEach(r => r.classList.remove("block"));
+    let worst = -1; fails.forEach((c, j) => { if (worst < 0 || c > fails[worst]) worst = j; });
+    if (worst >= 0) document.querySelector(`.frow[data-k="${act[worst][0]}"]`)?.classList.add("block");
+    const zl = (M.zones || []).filter(z => { const i = Math.floor(z.cy * M.grid.h10 / M.grid.h4) * M.grid.w10 + Math.floor(z.cx * M.grid.w10 / M.grid.w4);
+      return act.every(f => pass(f, i)); });
+    $("fsum").textContent = act.length ? `· ${act.length} on · ${(100 * left / total).toFixed(1)}% of mainland left` : "· switch criteria on to narrow the map";
+    $("fstat").innerHTML = act.length ? `<div><b>${(left * 100).toLocaleString("en-GB")}</b> <span>ha left (≈, 1 km blocks)</span></div>
+      <div><b>${(100 * left / total).toFixed(1)}%</b> <span>of mainland</span></div>
+      <div><b>${zl.length}</b> <span>of ${(M.zones || []).length} zones left</span></div>
+      <div><span>Biggest blocker:</span> <b style="font-size:15px">${act[worst][1]}</b> <span>(alone holds back ${(fails[worst] * 100).toLocaleString("en-GB")} ha)</span></div>`
+      : `<span>No filters on: every hectare shows.</span>`;
+    $("ftop").innerHTML = act.length && zl.length ? `<span style="color:var(--muted)">Top zones left:</span>` +
+      zl.slice(0, 10).map(z => `<button data-z="${z.id}">${z.id} ${z.concelho}</button>`).join("") : "";
+    window.filterActive = act.length > 0;
+    if (window.on3dLayer) window.on3dLayer();
+  }
+  window.filterCanvas = () => window.filterActive ? $("fcv") : null;
+  const wait = setInterval(() => { if (typeof M !== "undefined" && M && typeof BIN !== "undefined" && BIN && M.layers) { clearInterval(wait); setup(); } }, 200);
+})();
+</script>
+
+<script>
+/* ---------- Weights panel: change criterion weights, see the score map and zone ranking move ---------- */
+(() => {
+  const CRIT = [["water", "Water"], ["price", "Price"], ["soil", "Soil"], ["drive", "Drive"], ["access", "Access"], ["fire", "Fire safety"],
+    ["wellness", "Wellness"], ["hazards", "Mining safety"], ["war", "War safety"], ["unrest", "Unrest safety"]];
+  let w = {}, base = {}, zcells = null, lut = null;
+  const L = k => M.layers.find(l => l.key === k);
+  function hex(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+  function ramp(t) { const st = L("overall").legend.stops, x = Math.max(0, Math.min(1, t)) * (st.length - 1), i = Math.min(st.length - 2, Math.floor(x)), f = x - i;
+    const a = hex(st[i]), b = hex(st[i + 1]); return a.map((v, k) => Math.round(v + (b[k] - v) * f)); }
+  function setup() {
+    for (const [k] of CRIT) base[k] = M.weights[k] ?? 0;
+    try { w = Object.assign({}, base, JSON.parse(localStorage.getItem("arca-weights") || "{}")); } catch { w = { ...base }; }
+    const n = M.grid.w10 * M.grid.h10;
+    // zone → its 1 km cells (zones painted with their rank as colour)
+    const c = document.createElement("canvas"); c.width = M.grid.w10; c.height = M.grid.h10; const g = c.getContext("2d");
+    g.scale(M.grid.w10 / M.grid.w4, M.grid.h10 / M.grid.h4);
+    for (const z of (M.zones || [])) { g.fillStyle = `rgb(${z.rank >> 8},${z.rank & 255},0)`; g.fill(new Path2D(z.d)); }
+    const d = g.getImageData(0, 0, M.grid.w10, M.grid.h10).data; zcells = new Map();
+    for (let i = 0; i < n; i++) if (d[i * 4 + 3] === 255) { const r = d[i * 4] * 256 + d[i * 4 + 1]; if (!zcells.has(r)) zcells.set(r, []); zcells.get(r).push(i); }
+    for (const z of (M.zones || [])) if (!zcells.has(z.rank)) zcells.set(z.rank, [Math.floor(z.cy * M.grid.h10 / M.grid.h4) * M.grid.w10 + Math.floor(z.cx * M.grid.w10 / M.grid.w4)]);
+    const wc = $("wcv"); wc.width = M.grid.w10; wc.height = M.grid.h10;
+    $("wrows").innerHTML = CRIT.map(([k, lab]) => { const has = !!L("score_" + k);
+      return `<div class="frow ${has ? "" : "off"}" data-k="${k}"><span></span><label for="w_${k}">${lab}${has ? "" : " (no data yet)"}</label>
+        <output id="w_${k}_o">${w[k]}</output><input type="range" id="w_${k}" min="0" max="20" step="1" value="${w[k]}" ${has ? "" : "disabled"} aria-label="Weight for ${lab}"></div>`; }).join("");
+    $("wrows").addEventListener("input", e => { const k = e.target.id.slice(2); if (!(k in w)) return; w[k] = +e.target.value; $("w_" + k + "_o").textContent = w[k]; update(); });
+    $("w_reset").onclick = () => { w = { ...base }; sync(); };
+    $("w_equal").onclick = () => { for (const [k] of CRIT) w[k] = L("score_" + k) ? 5 : w[k]; sync(); };
+    $("wtop").addEventListener("click", e => { const b = e.target.closest("button"); if (b) flyZone(b.dataset.z); });
+    update();
+  }
+  function sync() { for (const [k] of CRIT) { const r = $("w_" + k); if (r) { r.value = w[k]; $("w_" + k + "_o").textContent = w[k]; } } update(); }
+  function scoreAt(i, act, sum) {
+    if (value(L("ruleout"), i) !== 0) return null;
+    let t = 0; for (const [k, L2] of act) { const v = value(L2, i); if (v == null) return null; t += w[k] * v; }
+    let s = t / sum; const nat = value(L("natura2000"), i), rn = value(L("rnap_class"), i);
+    if ((nat != null && Math.round(nat) === 1) || (rn != null && [2, 3].includes(Math.round(rn)))) s -= 10;
+    return Math.max(0, Math.min(100, s));
+  }
+  function update() {
+    try { localStorage.setItem("arca-weights", JSON.stringify(w)); } catch {}
+    const custom = CRIT.some(([k]) => w[k] !== base[k]);
+    const act = CRIT.filter(([k]) => L("score_" + k) && w[k] > 0).map(([k]) => [k, L("score_" + k)]);
+    const sum = act.reduce((a, [k]) => a + w[k], 0);
+    $("wsum").textContent = custom ? "· your own mix (map + ranking updated)" : "· your config weights";
+    const wc = $("wcv"), g = wc.getContext("2d"), img = g.createImageData(wc.width, wc.height), n = wc.width * wc.height, sc = new Float32Array(n).fill(NaN);
+    if (sum > 0) for (let i = 0; i < n; i++) { const v = scoreAt(i, act, sum); if (v == null) continue; sc[i] = v;
+      img.data.set([...ramp((v - 30) / 60), 255], i * 4); }
+    g.putImageData(img, 0, 0);
+    wc.hidden = !(custom && cur === "overall");
+    const ranked = (M.zones || []).map(z => { const cs = zcells.get(z.rank) || []; let t = 0, m = 0;
+      for (const i of cs) if (!isNaN(sc[i])) { t += sc[i]; m++; } return { z, s: m ? t / m : -1 }; }).filter(r => r.s >= 0).sort((a, b) => b.s - a.s);
+    const list = custom ? ranked.slice(0, 10) : (M.zones || []).slice(0, 10).map(z => ({ z, s: z.score }));
+    $("wtop").innerHTML = `<span style="color:var(--muted)">${custom ? "Top zones with your weights (≈ 1 km blocks):" : "Top zones (config weights):"}</span>` +
+      list.map((r, j) => `<button data-z="${r.z.id}">${j + 1}. ${r.z.id} ${r.z.concelho} · ${r.s.toFixed(1)}</button>`).join("");
+  }
+  // show the custom map only on the Overall score layer
+  const prev = window.on3dLayer;
+  window.on3dLayer = () => { const wc = $("wcv"); if (wc && zcells) wc.hidden = !(CRIT.some(([k]) => w[k] !== base[k]) && cur === "overall"); if (prev) prev(); };
+  const wait = setInterval(() => { if (typeof M !== "undefined" && M && typeof BIN !== "undefined" && BIN && M.layers && M.weights) { clearInterval(wait); setup(); } }, 200);
+})();
+</script>
+
+<script>
+/* ---------- Hectare mode (website): 1 ha / ~10 ha / 100 ha selection + 100 m detail when zoomed in ---------- */
+(() => {
+  let HA = null, size = 1, sel = null, inc = {};
+  const cache = new Map(), CRIT = ["water", "soil", "drive", "access", "fire", "wellness", "hazards", "war", "unrest"];
+  const NAMES = { water: "Water", soil: "Soil", drive: "Drive", access: "Access", fire: "Fire safety", wellness: "Wellness", hazards: "Mining safety", war: "War safety", unrest: "Unrest safety" };
+  const img = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error(src)); i.src = src; });
+  async function tile(tr, tc) {
+    const k = tr + "_" + tc; if (cache.has(k)) return cache.get(k);
+    const p = (async () => { const im = await img(`ha/t${k}.png`); const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
+      const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(im, 0, 0); return g.getImageData(0, 0, im.width, im.height).data; })();
+    cache.set(k, p); if (cache.size > 12) cache.delete(cache.keys().next().value); return p;
+  }
+  const hasTile = (tr, tc) => HA.tiles.some(t => t[0] === tr && t[1] === tc);
+  const bandIdx = k => HA.bands.findIndex(b => b.key === k);
+  function dec(b, q) { const m = HA.bands[b]; if (q === 255) return null; if (m.raw) return q; const v = m.lo + q / 254 * (m.hi - m.lo); return m.log ? Math.pow(10, v) : v; }
+  async function cell(r, c, keys) {                 // values for one hectare
+    const T = HA.tile, tr = Math.floor(r / T), tc = Math.floor(c / T); if (!hasTile(tr, tc)) return null;
+    const d = await tile(tr, tc), rr = r - tr * T, cc = c - tc * T, out = {};
+    for (const k of keys) { const b = bandIdx(k); if (b < 0) continue; const p = Math.floor(b / 3), ch = b % 3;
+      out[k] = dec(b, d[((p * T + rr) * T + cc) * 4 + ch]); }
+    return out;
+  }
+  async function block(r0, c0) {                   // centre cell → block of 1, 9 or 100 ha
+    const n = size === 1 ? 1 : size === 9 ? 3 : 10, h = Math.floor(n / 2), rows = [];
+    const keys = HA.bands.map(b => b.key).filter(k => !k.startsWith("_"));
+    for (let r = r0 - h; r < r0 - h + n; r++) for (let c = c0 - h; c < c0 - h + n; c++) { const v = await cell(r, c, keys); if (v) rows.push(v); }
+    return { rows, r: r0 - h, c: c0 - h, n };
+  }
+  const mean = (rows, k) => { let t = 0, m = 0; for (const v of rows) if (v[k] != null) { t += v[k]; m++; } return m ? t / m : null; };
+  function weights() { let w = {}; try { w = JSON.parse(localStorage.getItem("arca-weights") || "{}"); } catch {} return Object.assign({}, M.weights, w); }
+  async function show(r, c) {
+    const b = await block(r, c); sel = b; if (!b.rows.length) return;
+    const zr = b.rows.map(v => (v.zone_hi || 0) * 256 + (v.zone_lo || 0)).find(x => x > 0);
+    const kept = b.rows.filter(v => v.ruleout === 0).length;
+    const w = weights(); for (const k of CRIT) if (inc[k] === undefined) inc[k] = true;
+    const rowsHtml = CRIT.filter(k => bandIdx("score_" + k) >= 0).map(k => { const v = mean(b.rows, "score_" + k);
+      return `<dt><label><input type="checkbox" data-c="${k}" ${inc[k] ? "checked" : ""}> ${NAMES[k]}</label></dt><dd class="sc">w ${w[k] ?? 0}</dd><dd>${v == null ? "–" : v.toFixed(0)}</dd>`; }).join("");
+    let t = 0, s = 0; for (const k of CRIT) { const v = mean(b.rows, "score_" + k); if (inc[k] && v != null && (w[k] ?? 0) > 0) { t += w[k] * v; s += w[k]; } }
+    const raw = [["osrm_drive_min_from_lisbon", "Drive from Lisbon", v => v.toFixed(0) + " min"], ["elevation_m", "Elevation", v => v.toFixed(0) + " m"],
+      ["slope_pct", "Slope", v => v.toFixed(0) + " %"], ["aridity_index_2041_2060", "Aridity 2041–60", v => v.toFixed(2)], ["rainfall_mm", "Rainfall", v => v.toFixed(0) + " mm"],
+      ["fuel_2km_east", "Fuel within 2 km", v => (v * 100).toFixed(0) + " %"], ["july_tmax_2050", "July heat 2041–60", v => v.toFixed(1) + " °C"], ["hospital_drive_min", "Nearest A&E", v => v.toFixed(0) + " min"]]
+      .filter(([k]) => bandIdx(k) >= 0).map(([k, l, f]) => { const v = mean(b.rows, k); return `<dt>${l}</dt><dd></dd><dd>${v == null ? "–" : f(v)}</dd>`; }).join("");
+    $("probe").innerHTML = `${window.mixBlock ? window.mixBlock(k => mean(b.rows, k)) : ""}<div class="hacard"><div class="where">${b.n * b.n === 1 ? "1 hectare" : b.n * b.n + " ha block"}${zr ? ` · zone ${String(M.zones?.find(z => z.rank === zr)?.id || "Z" + zr)}` : ""}</div>
+      <div class="hint">${kept}/${b.rows.length} ha pass the rule-out · tick criteria to include them</div>
+      <dl><dt><b>Selection score</b></dt><dd class="sc">your weights</dd><dd><b>${s ? (t / s).toFixed(1) : "–"}</b></dd>${rowsHtml}</dl>
+      <dl style="margin-top:8px">${raw}</dl><button class="btn3" id="haclear" style="margin-top:8px">Clear selection</button></div>`;
+    window.haSel = true;
+    $("haclear").onclick = () => { window.haSel = false; document.querySelectorAll("#ov .hasel-r").forEach(e => e.remove()); $("probe").innerHTML = '<div class="hint">Hover or tap the map to read values.</div>'; };
+    $("probe").querySelectorAll("input[data-c]").forEach(cb => cb.onchange = () => { inc[cb.dataset.c] = cb.checked; show(r, c); });
+    // outline the block on the map (400 m pixel space)
+    document.querySelectorAll("#ov .hasel-r").forEach(e => e.remove());
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("class", "hasel-r"); rect.setAttribute("x", b.c / 4); rect.setAttribute("y", b.r / 4); rect.setAttribute("width", b.n / 4); rect.setAttribute("height", b.n / 4);
+    rect.setAttribute("style", "fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke"); $("ov").appendChild(rect);
+  }
+  // tap → hectare under the finger (runs after the 1 km readout and replaces it)
+  let down = null;
+  function wire() {
+    const s = $("sheet");
+    s.addEventListener("pointerdown", e => { down = [e.clientX, e.clientY]; });
+    s.addEventListener("pointerup", e => { if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 || e.target.closest(".ctls")) return;
+      const r = $("img").getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+      if (fx < 0 || fy < 0 || fx >= 1 || fy >= 1) return;
+      setTimeout(() => show(Math.floor(fy * HA.H), Math.floor(fx * HA.W)), 0); });
+    document.querySelector(".hasel").addEventListener("click", e => { const b = e.target.closest("button[data-ha]"); if (!b) return;
+      size = +b.dataset.ha; document.querySelectorAll(".hasel button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      if (sel) show(sel.r + Math.floor(sel.n / 2), sel.c + Math.floor(sel.n / 2)); });
+  }
+  // 100 m detail of the current layer when zoomed in
+  function hexrgb(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+  const painted = new Map();
+  async function paint() {
+    const L = M.layers.find(l => l.key === cur), b = bandIdx(cur);
+    const on = view.s >= 3 && b >= 0 && L && !$("sheet").hidden && !window.mixShown && !document.body.classList.contains("easy");
+    document.querySelectorAll(".hat").forEach(el => { if (!on || el.dataset.k !== cur) { el.remove(); painted.delete(el.dataset.t + el.dataset.k); } });
+    if (!on) return;
+    const sr = $("sheet").getBoundingClientRect(), ir = $("img").getBoundingClientRect(), T = HA.tile;
+    for (const [tr, tc] of HA.tiles) {
+      const x0 = ir.left + tc * T / HA.W * ir.width, y0 = ir.top + tr * T / HA.H * ir.height, x1 = x0 + T / HA.W * ir.width, y1 = y0 + T / HA.H * ir.height;
+      if (x1 < sr.left || x0 > sr.right || y1 < sr.top || y0 > sr.bottom) continue;
+      const key = tr + "_" + tc + cur; if (painted.has(key)) continue; painted.set(key, 1);
+      const d = await tile(tr, tc), p = Math.floor(b / 3), ch = b % 3, c = document.createElement("canvas"); c.width = T; c.height = T;
+      const g = c.getContext("2d"), id = g.createImageData(T, T);
+      const stops = L.legend.type === "ramp" ? L.legend.stops.map(hexrgb) : null, cats = L.legend.type === "cat" ? L.legend.items : null;
+      for (let i = 0; i < T * T; i++) { const q = d[(p * T * T + i) * 4 + ch]; if (q === 255) continue; let col;
+        if (stops) { const x = q / 254 * (stops.length - 1), j = Math.min(stops.length - 2, Math.floor(x)), f = x - j; col = stops[j].map((v, k) => v + (stops[j + 1][k] - v) * f); }
+        else { const it = cats && (L.key === "ruleout" ? cats[q] : cats.find((_, n) => String(Object.keys(L.cats)[n]) === String(q))); if (!it) continue; col = hexrgb(it.color); }
+        id.data.set([col[0], col[1], col[2], 255], i * 4); }
+      g.putImageData(id, 0, 0);
+      c.className = "hat"; c.dataset.k = cur; c.dataset.t = tr + "_" + tc;
+      Object.assign(c.style, { left: tc * T / HA.W * 100 + "%", top: tr * T / HA.H * 100 + "%", width: T / HA.W * 100 + "%", height: T / HA.H * 100 + "%" });
+      $("stage").insertBefore(c, $("ov"));
+    }
+  }
+  const wait = setInterval(() => { if (typeof M !== "undefined" && M && M.ha) { clearInterval(wait); HA = M.ha; wire(); setInterval(paint, 600);
+    const orig = probe; probe = i => { if (window.haSel) return; orig(i); }; } }, 200);   // keep a hectare selection until cleared
+})();
+</script>
+<script>
+/* ---------- My mix: tick several variables, blend them into one 0–100 score ---------- */
+(() => {
+  let mix = [], show = false, kept = true, wasOn = false;
+  try { const s = JSON.parse(localStorage.getItem("arca-mix") || "{}"); mix = s.mix || []; show = !!s.show; kept = s.kept !== false; } catch {}
+  const save = () => { try { localStorage.setItem("arca-mix", JSON.stringify({ mix, show, kept })); } catch {} };
+  const L = k => M.layers.find(l => l.key === k);
+  const ok = l => l.legend && l.legend.type === "ramp" && (l.good === "high" || l.good === "low");
+  function good(Ly, v) {
+    if (v == null || !Ly) return null;
+    const t = Ly.legend.ticks; let a = t[0], b = t[t.length - 1], x = v;
+    if (Ly.log) { a = Math.log10(Math.max(a, 1)); b = Math.log10(Math.max(b, 1)); x = Math.log10(Math.max(v, 1)); }
+    const g = Math.max(0, Math.min(1, (x - a) / (b - a)));
+    return 100 * (Ly.good === "low" ? 1 - g : g);
+  }
+  function score(get) { let t = 0, s = 0;
+    for (const m of mix) { const g = good(L(m.k), get(m.k)); if (g == null) return null; t += m.w * g; s += m.w; }
+    return s ? t / s : null; }
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  function ramp(t) { const st = L("overall").legend.stops, x = Math.max(0, Math.min(1, t)) * (st.length - 1), i = Math.min(st.length - 2, Math.floor(x)), f = x - i;
+    const a = hex(st[i]), b = hex(st[i + 1]); return a.map((v, k) => Math.round(v + (b[k] - v) * f)); }
+  window.mixBlock = get => {
+    if (!mix.length) return "";
+    const sc = score(get);
+    return `<div class="mixro"><div class="mh">My mix<span>${sc == null ? "–" : sc.toFixed(0)}<small> /100</small></span></div><dl>${
+      mix.map(m => { const Ly = L(m.k), v = get(m.k), g = good(Ly, v);
+        return `<dt>${Ly.label} <small>×${m.w}</small></dt><dd>${fmt(Ly, v)} <span class="gd">${g == null ? "–" : g.toFixed(0)}</span></dd>`; }).join("")}</dl></div>`;
+  };
+  function draw() {
+    const c = $("mcv"), on = show && mix.length > 0;
+    window.mixShown = on; c.hidden = !on; $("mtag").hidden = !on;
+    $("mtag").textContent = `Map shows: My mix (${mix.length} variable${mix.length === 1 ? "" : "s"})`;
+    $("m_show").checked = show; $("m_kept").checked = kept;
+    $("msum").textContent = mix.length ? `· ${mix.length} picked${on ? ", shown on the map" : ""}` : "· tick several variables to blend them into your own score";
+    if (on) document.querySelectorAll(".hat").forEach(e => e.remove());
+    if (!on) { if (wasOn) { wasOn = false; render(); } return; }
+    wasOn = true;
+    const info = $("info"), st = L("overall").legend.stops;
+    if (info.querySelector("h3")) {
+      info.querySelector("h3").textContent = "My mix";
+      const step = info.querySelector(".step"); if (step) step.textContent = "Your own blend";
+      info.querySelector(".badge")?.parentElement.remove();
+      const note = info.querySelector(".note"); if (note) note.textContent = mix.map(m => `${L(m.k).label} ×${m.w}`).join(" · ") + ". Pick a layer from the menu to leave the mix view.";
+      const lg = info.querySelector(".legend"); if (lg) lg.innerHTML = `<div class="ramp" style="background:linear-gradient(90deg,${st.join(",")})"></div><div class="ticks"><span>0</span><span>50</span><span>100</span></div><div class="good">100 = best for the Ark on your picks</div>`;
+      info.querySelector(".flag")?.remove();
+    }
+    c.width = M.grid.w10; c.height = M.grid.h10;
+    const g = c.getContext("2d"), img = g.createImageData(c.width, c.height), n = c.width * c.height, RO = L("ruleout");
+    const ls = mix.map(m => [m, L(m.k)]);
+    for (let i = 0; i < n; i++) {
+      if (kept) { const r = value(RO, i); if (r !== 0) continue; }
+      let t = 0, s = 0, bad = false;
+      for (const [m, Ly] of ls) { const q = good(Ly, value(Ly, i)); if (q == null) { bad = true; break; } t += m.w * q; s += m.w; }
+      if (bad || !s) continue;
+      img.data.set([...ramp(t / s / 100), 255], i * 4);
+    }
+    g.putImageData(img, 0, 0);
+  }
+  function ui() {
+    const st = L("overall").legend.stops;
+    $("mleg").innerHTML = mix.length ? `<div class="ramp" style="background:linear-gradient(90deg,${st.join(",")})"></div><div class="ticks"><span>0 poor</span><span>50</span><span>100 best for the Ark</span></div>` : "";
+    $("mrows").innerHTML = mix.map(m => { const Ly = L(m.k);
+      return `<div class="frow" data-k="${m.k}"><span></span><label for="mw_${m.k}">${Ly.label}</label><output id="mw_${m.k}_o">×${m.w}</output>
+        <input type="range" id="mw_${m.k}" min="1" max="10" step="1" value="${m.w}" aria-label="Weight for ${Ly.label}"></div>`; }).join("");
+    const picked = new Set(mix.map(m => m.k));
+    $("mpick").innerHTML = Object.entries(GROUPS).map(([g, name]) => { const ls = M.layers.filter(l => l.group === g && ok(l)); if (!ls.length) return "";
+      return `<div class="g"><b>${name}</b>${ls.map(l => `<button type="button" class="chip" data-k="${l.key}" aria-pressed="${picked.has(l.key)}">${l.label}</button>`).join("")}</div>`; }).join("");
+  }
+  function refresh() { save(); ui(); draw(); if (typeof last !== "undefined") probe(last); }
+  function setup() {
+    $("mpick").addEventListener("click", e => { const b = e.target.closest(".chip"); if (!b) return; const k = b.dataset.k, j = mix.findIndex(m => m.k === k);
+      if (j >= 0) mix.splice(j, 1); else { mix.push({ k, w: 5 }); show = true; }
+      refresh(); });
+    $("mrows").addEventListener("input", e => { const k = e.target.id.slice(3), m = mix.find(x => x.k === k); if (!m) return;
+      m.w = +e.target.value; $("mw_" + k + "_o").textContent = "×" + m.w; save(); draw(); if (typeof last !== "undefined") probe(last); });
+    $("m_show").addEventListener("change", e => { show = e.target.checked; refresh(); });
+    $("m_kept").addEventListener("change", e => { kept = e.target.checked; refresh(); });
+    $("m_clear").addEventListener("click", () => { mix = []; show = false; refresh(); });
+    $("layer").addEventListener("change", () => { if (show) { show = false; refresh(); } });   // picking a layer shows that layer
+    const orig = probe;
+    probe = i => { orig(i); if (!mix.length || i == null || window.haSel) return; const el = $("probe"); if (el) el.insertAdjacentHTML("afterbegin", window.mixBlock(k => { const Ly = L(k); return Ly ? value(Ly, i) : null; })); };
+    if (mix.length) $("mpanel").open = true;
+    ui(); draw();
+  }
+  const wait = setInterval(() => { if (typeof M !== "undefined" && M && typeof BIN !== "undefined" && BIN && M.layers && document.getElementById("probe")) { clearInterval(wait); setup(); } }, 200);
+})();
+</script>
+<script>
+/* ---------- Simple view: four questions → one fit map, best places, plain cards ---------- */
+(() => {
+  const DIMS = { water: "Water and cool summers", cheap: "Cheap land", lisbon: "Close to Lisbon", beach: "Near the beach", fire: "Low fire risk", soil: "Good soil", quiet: "Quiet and healthy", build: "Can build" };
+  let w = {}, simple = true;
+  const active = () => Object.keys(DIMS).filter(k => (w[k] || 0) > 0);
+  try { const st = JSON.parse(localStorage.getItem("arca-simple") || "{}"); w = st.w || {}; simple = st.simple !== false; } catch {}
+  const save = () => { try { localStorage.setItem("arca-simple", JSON.stringify({ w, simple })); } catch {} };
+  const L = k => M.layers.find(l => l.key === k);
+  const V = (k, i) => { const Ly = L(k); return Ly ? value(Ly, i) : null; };
+  const lin = (v, a, b) => v == null ? null : Math.max(0, Math.min(100, (v - a) / (b - a) * 100));
+  const avg = a => { const x = a.filter(v => v != null); return x.length ? x.reduce((s, v) => s + v, 0) / x.length : null; };
+  const dim = {
+    water: i => avg([V("score_water", i), lin(V("july_tmax_2050", i), 35, 28), lin(V("aridity_index_2041_2060", i), 0.5, 1.0)]),
+    cheap: i => { const p = V("land_price_eur_ha", i); return p == null ? null : lin(Math.log10(p), Math.log10(80000), Math.log10(5000)); },
+    lisbon: i => avg([V("score_drive", i), lin(V("airport_lis_drive_min", i), 120, 40), lin(V("rail_hs_station_drive_min", i), 90, 20)]),
+    beach: i => lin(V("dist_coast_m", i), 50000, 5000),
+    fire: i => V("score_fire", i),
+    soil: i => V("score_soil", i),
+    quiet: i => V("score_wellness", i),
+    build: i => { const b = V("buildability", i); return b == null ? null : ({ 1: 100, 2: 75, 0: 40, 3: 0 })[Math.round(b)] ?? null; },
+  };
+  const fire = i => V("score_fire", i);
+  const kept = i => V("ruleout", i) === 0;
+  function fit(i) {
+    const ks = active(); if (!ks.length || !kept(i)) return null;
+    let t = 0, sw = 0;
+    for (const k of ks) { const v = dim[k](i); if (v == null) return null; t += w[k] * Math.log(Math.max(v, 1) / 100); sw += w[k]; }
+    return 100 * Math.exp(t / sw);
+  }
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  let STOPS = null;
+  function col(t) { STOPS = STOPS || L("overall").legend.stops.map(hex); const n = STOPS.length - 1, x = Math.max(0, Math.min(1, t)) * n, j = Math.min(n - 1, Math.floor(x)), f = x - j; return STOPS[j].map((v, k) => Math.round(v + (STOPS[j + 1][k] - v) * f)); }
+  function draw() {
+    const c = $("scv"), g = M.grid; c.width = g.w10; c.height = g.h10;
+    const ctx = c.getContext("2d"), img = ctx.createImageData(g.w10, g.h10), n = g.w10 * g.h10;
+    const lo = M.bands.indexOf("mun_lo") * n, hi = M.bands.indexOf("mun_hi") * n;
+    for (let i = 0; i < n; i++) {
+      if (!(BIN[lo + i] + BIN[hi + i])) continue;
+      let rgb = [230, 231, 234];
+      if (active().length) { const f = fit(i); rgb = f == null ? [244, 245, 247] : col((f - 25) / 60); }
+      img.data.set([...rgb, 255], i * 4);
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  const cellOf = e => { const g = M.grid; return Math.min(g.h10 - 1, Math.floor(e.cy * 4 / 10)) * g.w10 + Math.min(g.w10 - 1, Math.floor(e.cx * 4 / 10)); };
+  function near(e, f) { const g = M.grid, i0 = cellOf(e), r0 = Math.floor(i0 / g.w10), c0 = i0 % g.w10, v = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const x = f((r0 + dr) * g.w10 + c0 + dc); if (x != null) v.push(x); } return avg(v); }
+  function goodWatch(get) {
+    const SHORT = { water: "Water", cheap: "Cheap land", lisbon: "Near Lisbon", beach: "Beach", fire: "Low fire risk", soil: "Soil", quiet: "Quiet", build: "Can build" }, g = [], w = [];
+    for (const [k] of Object.entries(DIMS)) { const name = SHORT[k]; const v = get(dim[k]); if (v == null) continue; if (v >= 65) g.push(name); else if (v <= 35) w.push(name); }
+    return `${g.length ? `<div class="chips">${g.map(t => `<span class="chip g">Good: ${t}</span>`).join("")}</div>` : ""}${w.length ? `<div class="chips">${w.map(t => `<span class="chip w">Watch: ${t}</span>`).join("")}</div>` : ""}`;
+  }
+  function places() {
+    const E = (M.estates || []).map(e => ({ e, f: active().length ? near(e, fit) : e.score })).filter(r => r.f != null).sort((a, b) => b.f - a.f).slice(0, 10);
+    $("ptitle").textContent = active().length ? "Best places for your sliders" : "Best places overall";
+    $("places").innerHTML = E.map((r, j) => `<button class="place" type="button" data-e="${r.e.id}"><div class="pn"><b>${j + 1}. ${r.e.freguesia.replace(/^União das freguesias de /, "")}</b><span>${Math.round(r.f)}</span></div>
+      <div class="pw">${r.e.concelho} · site ${r.e.id} · ${r.e.airport} min to the airport</div>${goodWatch(f => near(r.e, f))}</button>`).join("");
+  }
+  function card(i) {
+    const el = $("scard");
+    if (i == null) {
+      el.innerHTML = active().length ? `<h3>Fit for your sliders</h3><div class="rampbox"><div class="ramp" style="background:linear-gradient(90deg,${L("overall").legend.stops.join(",")})"></div><div class="ticks"><span>not a fit</span><span>good fit</span></div></div><p>Pale grey land fails a hard filter (too dry, fire, flood, protected, steep or built up). Tap the map or a place for details.</p>`
+        : `<h3>Slide what matters</h3><p>Move one or more sliders above. Green is a good fit, red is not. Tap the map for details.</p>`;
+      return;
+    }
+    const m = M.bands.indexOf("mun_lo"), n = M.grid.w10 * M.grid.h10, mu = BIN[m * n + i] + 256 * BIN[(m + 1) * n + i];
+    const f = fit(i);
+    el.innerHTML = `<h3>${mu ? M.concelhos[mu - 1] : "Portugal"}</h3>${active().length ? `<div><div class="fit">${f == null ? "–" : Math.round(f)}</div><p>fit out of 100 for your sliders</p></div>` : ""}
+      ${kept(i) ? goodWatch(g => g(i)) : `<p>This land fails one of our hard filters (too dry, fire, flood, protected, too steep or built up).</p>`}
+      <p>About 1 km around the point you tapped. All est.</p>`;
+  }
+  function apply_() {
+    document.body.classList.toggle("easy", simple);
+    $("xtoggle").textContent = simple ? "Expert mode" : "Simple mode";
+    document.querySelectorAll(".sl").forEach(d => { const k = d.dataset.k, v = w[k] || 0; d.classList.toggle("on", v > 0);
+      d.querySelector("input").value = v; d.querySelector("output").textContent = v ? "×" + v : "off"; });
+    window.simpleOn = simple;
+    draw(); places(); card(null); save();
+    if (window.on3dLayer) window.on3dLayer();
+  }
+  function setup() {
+    $("sbtnrow").innerHTML = Object.entries(DIMS).map(([k, n]) => `<div class="sl" data-k="${k}"><div class="st"><label for="sl_${k}">${n}</label><output id="sl_${k}_o">off</output></div>
+      <input type="range" id="sl_${k}" min="0" max="10" step="1" value="0"></div>`).join("");
+    let tmr = null;
+    $("sbtnrow").addEventListener("input", e => { const d = e.target.closest(".sl"); if (!d) return; w[d.dataset.k] = +e.target.value;
+      d.querySelector("output").textContent = w[d.dataset.k] ? "×" + w[d.dataset.k] : "off"; d.classList.toggle("on", w[d.dataset.k] > 0);
+      clearTimeout(tmr); tmr = setTimeout(apply_, 120); });
+    $("xtoggle").addEventListener("click", () => { simple = !simple; apply_(); if (!simple) render(); });
+    $("places").addEventListener("click", e => { const b = e.target.closest(".place"); if (!b) return;
+      const z = M.estates.find(q => q.id === b.dataset.e); flyEstate(b.dataset.e); setTimeout(() => card(cellOf(z)), 50); });
+    const sh = $("sheet"); let down = null;
+    sh.addEventListener("pointerdown", e => { down = [e.clientX, e.clientY]; });
+    sh.addEventListener("pointerup", e => { if (!simple || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 || e.target.closest(".ctls")) return;
+      const i = cellAt(e); if (i != null) card(i); });
+    sh.addEventListener("pointermove", e => { if (!simple || e.pointerType !== "mouse") return; const i = cellAt(e); if (i != null) card(i); });
+    window.simpleCanvas = () => $("scv");
+    const op = probe; probe = i => { if (document.body.classList.contains("easy")) { if (i != null) card(i); return; } op(i); };
+    apply_();
+    $("m3d").click();                                   // 3D terrain by default
+  }
+  const wait = setInterval(() => { if (typeof M !== "undefined" && M && typeof BIN !== "undefined" && BIN && M.layers && document.getElementById("scard") && typeof flyEstate === "function") { clearInterval(wait); setup(); } }, 200);
+})();
+</script>
+
+
