@@ -1,0 +1,70 @@
+{
+  "id": "odemira-01",
+  "lat": 37.5823,
+  "lon": -8.5944,
+  "climate": {
+    "rainMmPerMonth": [
+      49.4,
+      54.0,
+      71.7,
+      55.3,
+      31.1,
+      12.9,
+      2.0,
+      3.2,
+      24.8,
+      71.8,
+      67.4,
+      63.5
+    ],
+    "rainMmPerYear": 507,
+    "rainDryYearMm": 375,
+    "rainWetYearMm": 632,
+    "referenceEvaporationMmPerMonth": [
+      45.8,
+      58.6,
+      88.5,
+      109.4,
+      150.6,
+      165.6,
+      187.8,
+      175.0,
+      125.9,
+      90.1,
+      54.4,
+      43.1
+    ],
+    "solarKwhPerKwpPerDay": [
+      3.52,
+      3.96,
+      4.35,
+      4.67,
+      4.99,
+      5.04,
+      5.41,
+      5.4,
+      4.88,
+      4.04,
+      3.5,
+      3.27
+    ],
+    "solarKwhPerKwpPerYear": 1614,
+    "source": "Rain + evaporation: Open-Meteo archive (ERA5 reanalysis), 2005-2024 monthly means, ~10 km grid. Sun: PVGIS 5.3 (EU JRC), 35\u00b0 tilt, south."
+  },
+  "terrain": {
+    "altitudeMinM": 56,
+    "altitudeMaxM": 92,
+    "gentleShare": 0.09,
+    "moderateShare": 0.24,
+    "steepShare": 0.67,
+    "southFacingShare": 0.15,
+    "source": "Copernicus GLO-30 elevation (30 m): good for the overall shape, not for small bumps."
+  },
+  "cover": {
+    "treesInPlot": 58,
+    "treeCoverShare": 0.06,
+    "treeCoverAroundShare": 0.11,
+    "shrubs": 5200,
+    "source": "Counted from the DGT OrtoSat 2023 aerial photo (30 cm)."
+  }
+}

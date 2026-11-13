@@ -237,6 +237,24 @@ body.easy .stage svg path.z, body.easy .lbl3 { display: none !important }
 .viewbtns { display: flex; gap: 8px; flex-wrap: wrap }
 .hero2 { display: flex; justify-content: space-between; align-items: start; gap: 16px; padding-block: 40px 8px; margin-top: -20px }
 .brandblock { display: grid; gap: 14px }
+/* menu bar: burger left, small centred wordmark, dropdown menu */
+.hero2.bar { position: relative; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding-block: 12px; min-height: 72px }
+.hero2.bar .logolink { justify-self: center; display: block; line-height: 0 }
+.hero2.bar .logo { height: 22px; width: auto }
+.burger { width: 48px; height: 48px; border: 0; background: none; padding: 0; cursor: pointer; position: relative; border-radius: 4px }
+.burger span { position: absolute; left: 12px; right: 12px; height: 1.5px; background: var(--ink); transition: transform .2s var(--ease), top .2s var(--ease) }
+.burger span:first-child { top: 19px } .burger span:last-child { top: 28px }
+.burger[aria-expanded="true"] span { top: 23.5px }
+.burger[aria-expanded="true"] span:first-child { transform: rotate(45deg) }
+.burger[aria-expanded="true"] span:last-child { transform: rotate(-45deg) }
+.burger:focus-visible, .menu a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+.menu { position: absolute; left: 0; top: 100%; z-index: 50; width: min(320px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--rule); border-radius: 16px; padding: 8px 24px 16px; display: grid }
+.menu[hidden] { display: none }
+.mgroup { padding: 16px 0 8px; border-top: 1px solid var(--rule) } .mgroup:first-child { border-top: 0 }
+.mlabel { margin: 0 0 4px; font: 500 14px/1.2 var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
+.menu a { display: flex; align-items: center; min-height: 48px; font: 500 24px/1.15 var(--f-display); letter-spacing: -.02em; color: var(--ink); text-decoration: none }
+.menu a:hover { text-decoration: underline; text-underline-offset: 6px }
+.kpirow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px 24px }
 .hero2 .logo { height: clamp(32px, 4vw, 52px); width: auto }
 .tagline { margin: 0; font: 500 clamp(18px, 1.8vw, 24px)/1.2 var(--f-display); letter-spacing: -.01em; color: var(--muted) }
 .shead { align-items: start; flex-wrap: nowrap }
@@ -300,14 +318,29 @@ footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule)
 
 <div class="wrap">
 <script>try { if (JSON.parse(localStorage.getItem("arca-simple") || "{}").simple !== false) document.body.classList.add("easy"); } catch (e) { document.body.classList.add("easy"); }</script>
-  <header class="hero2">
-    <div class="brandblock">
-      <img class="logo" src="img/arca-wordmark.svg" alt="ARCA" width="260" height="48">
-      <p class="tagline">Find your home</p>
-    </div>
-    <button class="xbtn" id="xtoggle" type="button">Expert</button>
+  <header class="hero2 bar">
+    <button class="burger" id="menubtn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu"><span></span><span></span></button>
+    <a class="logolink" href="./" aria-label="ARCA home"><img class="logo" src="img/arca-wordmark.svg" alt="ARCA" width="260" height="48"></a>
+    <nav class="menu" id="menu" aria-label="Main" hidden>
+      <div class="mgroup">
+        <p class="mlabel">Find your land</p>
+        <a href="./" aria-current="page">Land explorer</a>
+      </div>
+      <div class="mgroup">
+        <p class="mlabel">Build your home</p>
+        <a href="studio/">Studio</a>
+      </div>
+    </nav>
   </header>
-  <div class="kpis" id="kpis"></div>
+  <script>(function(){var b=document.getElementById("menubtn"),m=document.getElementById("menu");
+    function set(o){m.hidden=!o;b.setAttribute("aria-expanded",o?"true":"false");b.setAttribute("aria-label",o?"Close menu":"Menu");}
+    b.addEventListener("click",function(e){e.stopPropagation();set(m.hidden);});
+    document.addEventListener("click",function(e){if(!m.hidden&&!m.contains(e.target))set(false);});
+    document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!m.hidden){set(false);b.focus();}});})();</script>
+  <div class="kpirow">
+    <div class="kpis" id="kpis"></div>
+    <button class="xbtn" id="xtoggle" type="button">Expert</button>
+  </div>
 
   <section class="simple" id="sq" aria-label="What matters to you">
     <div class="shead">
